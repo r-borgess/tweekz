@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 def load_image(image_path):
     """
@@ -29,3 +30,37 @@ def save_image(image, save_path):
         print(f"Error: Could not save image to {save_path}")
         return False
     return True
+
+image_path = 'tests/test_images/Ramadan_Kyrie.jpg'
+# Load the image
+original_image = load_image(image_path)
+
+def blackout_image(image):
+    """
+    Set all pixels of the image to zero (black).
+
+    Parameters:
+    image (numpy.ndarray): The image to blackout.
+
+    Returns:
+    numpy.ndarray: The blacked out image.
+    """
+    global original_image
+    # Store the original image if not already stored
+    if original_image is None:
+        original_image = image.copy()
+    return np.zeros_like(image)
+
+def restore_image():
+    """
+    Restore the image to its original state.
+
+    Returns:
+    numpy.ndarray or None: The original image, or None if there is no image to restore.
+    """
+    global original_image
+    if original_image is not None:
+        return original_image
+    else:
+        print("No image to restore.")
+        return None
