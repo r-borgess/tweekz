@@ -21,11 +21,11 @@ The Image Processing App is designed as a platform for demonstrating and executi
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourgithub/ImageProcessingApp.git
+   git clone https://github.com/r-borgess/tweekz.git
    ```
 2. Navigate to the project directory:
    ```
-   cd ImageProcessingApp
+   cd tweekz
    ```
 3. Create and activate a virtual environment:
    - **Windows:**
