@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 
+original_image = None
+
 def load_image(image_path):
     """
     Load an image from a specified file path.
@@ -31,9 +33,11 @@ def save_image(image, save_path):
         return False
     return True
 
+'''
 image_path = 'tests/test_images/Ramadan_Kyrie.jpg'
 # Load the image
 original_image = load_image(image_path)
+'''
 
 def blackout_image(image):
     """
@@ -50,6 +54,7 @@ def blackout_image(image):
     if original_image is None:
         original_image = image.copy()
     return np.zeros_like(image)
+
 
 def restore_image():
     """
