@@ -1,4 +1,4 @@
-from src import image_processor
+import image_processor
 
 class ImageProcessor:
     def __init__(self):
