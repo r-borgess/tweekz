@@ -1,11 +1,8 @@
-import json
-import ttkbootstrap as tb
 from ttkbootstrap.constants import *
 from tkinter import filedialog, messagebox, Label, Frame, Menu
 from PIL import Image, ImageTk
 import cv2
 from image_controller import ImageProcessor
-import threading
 
 class ImageEditorApp:
     def __init__(self, root, config):
@@ -100,16 +97,3 @@ class ImageEditorApp:
         self.img_label.configure(image=photo)
         self.img_label.image = photo  # Keep a reference
 
-
-def main():
-    # Load configuration from JSON file
-    config_file = open('config.json')
-    config = json.load(config_file)
-
-    root = tb.Window(themename=config["themename"])
-    app = ImageEditorApp(root, config)
-    root.mainloop()
-
-
-if __name__ == "__main__":
-    main()
