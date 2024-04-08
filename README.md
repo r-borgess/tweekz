@@ -1,8 +1,8 @@
-# Image Processing App
+# tweekz
 
 ## Overview
 
-The Image Processing App is designed as a platform for demonstrating and executing image processing operations. It features a graphical user interface for ease of use, supporting basic functionalities such as loading, displaying, modifying, and saving images. The application is developed in Python, emphasizing modularity and extensibility to facilitate future additions of more complex image processing capabilities.
+This tool is designed as a platform for demonstrating and executing image processing operations. It features a graphical user interface for ease of use, supporting basic functionalities such as loading, displaying, modifying, and saving images. The application is developed in Python, emphasizing modularity and extensibility to facilitate future additions of more complex image processing capabilities.
 
 ## Features
 
