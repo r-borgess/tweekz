@@ -1,5 +1,6 @@
 from ttkbootstrap.constants import *
-from tkinter import filedialog, messagebox, Label, Frame, Menu
+import ttkbootstrap as tkb
+from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button
 from PIL import Image, ImageTk
 import cv2
 from image_controller import ImageProcessor
@@ -64,6 +65,34 @@ class ImageEditorApp:
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
             messagebox.showerror("Blackout Image", "Failed to blackout the image.\n" + str(e))
+
+    def gamma_transform_image(self):
+        self.create_gamma_popup()
+
+    def create_gamma_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Gamma Transformation")
+        popup.geometry("300x100")
+
+        Label(popup, text="Gamma value:").pack(side="top", fill="x", pady=10)
+
+        gamma_value_entry = Entry(popup)
+        gamma_value_entry.pack(side="top", fill="x")
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_gamma_and_close_popup(gamma_value_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_gamma_and_close_popup(self, gamma_value, popup):
+        try:
+            gamma_value = float(gamma_value)
+            np_image = self.image_processor.gamma_transform_image(gamma_value)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Gamma Transform", "Invalid gamma value. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Gamma Transform", "Failed to transform the image.\n" + str(e))
+            popup.destroy()
 
     def restore_image(self):
         try:

@@ -1,11 +1,10 @@
 import os
-import cv2
 import numpy as np
 from src.image_processor import load_image, save_image, blackout_image, restore_image
 
 def test_load_image_success():
     # Assuming there's a test image in a known location
-    image_path = 'tests/test_images/Ramadan_Kyrie.jpg'
+    image_path = "tests/Ramadan_Kyrie.jpg"
     image = load_image(image_path)
     assert image is not None
 
@@ -34,7 +33,7 @@ def test_blackout_image():
 
 def test_restore_image():
     # Path to a test image
-    image_path = 'tests/test_images/Ramadan_Kyrie.jpg'
+    image_path = "tests\Ramadan_Kyrie.jpg"
     # Load the image
     original_image = load_image(image_path)
     # Make some modification, here we just use blackout for the example

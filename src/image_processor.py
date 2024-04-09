@@ -69,3 +69,13 @@ def restore_image():
     else:
         print("No image to restore.")
         return None
+
+def apply_gamma_transformation(image, gamma):
+    # Convert to float to avoid overflow or underflow during the power operation
+    image_float = np.float32(image) / 255.0
+    # Apply the gamma correction
+    #corrected_img = np.power(image_float, gamma)
+    corrected_img = np.power(image_float, gamma)
+    # Scale back to original range
+    corrected_img = np.uint8(corrected_img * 255)
+    return corrected_img

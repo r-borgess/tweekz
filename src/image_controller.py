@@ -20,3 +20,7 @@ class ImageProcessor:
     def restore_image(self):
         self.current_image = self.original_image.copy()
         return self.current_image
+    
+    def gamma_transform_image(self, gamma):
+        self.current_image = image_processor.apply_gamma_transformation(self.current_image, gamma)
+        return self.current_image

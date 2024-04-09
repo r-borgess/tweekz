@@ -4,7 +4,7 @@ from ttk_bootstrap_gui import ImageEditorApp
 
 def main():
     # Load configuration from JSON file
-    config_file = open("src/config.json")
+    config_file = open('config.json')
     config = json.load(config_file)
 
     root = tb.Window(themename=config["themename"])
