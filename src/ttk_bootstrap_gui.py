@@ -133,6 +133,34 @@ class ImageEditorApp:
             messagebox.showerror("Contrast Stretch", "Failed to transform the image.\n" + str(e))
             popup.destroy()
 
+    def bit_plane_extract_image(self):
+        self.create_bit_plane_popup()
+
+    def create_bit_plane_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Bit plane extraction")
+        popup.geometry("200x100")
+
+        Label(popup, text="Desired plane:").pack(side="top", fill="x", pady=10)
+
+        bit_plane_entry = Entry(popup)
+        bit_plane_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.extract_bit_plane_and_close_popup(bit_plane_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def extract_bit_plane_and_close_popup(self, bit_plane, popup):
+        try:
+            bit_plane = int(bit_plane)
+            np_image = self.image_processor.extract_bit_plane(bit_plane)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Bit plane extraction", "Invalid plane value. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Bit plane extraction", "Failed to extract.\n" + str(e))
+            popup.destroy()
+
     def restore_image(self):
         try:
             np_image = self.image_processor.restore_image()

@@ -28,3 +28,7 @@ class ImageProcessor:
     def contrast_stretch_image(self, r1, s1, r2, s2):
         self.current_image = image_processor.apply_contrast_stretch(self.current_image, r1, s1, r2, s2)
         return self.current_image
+
+    def extract_bit_plane(self, bit_plane):
+        self.current_image = image_processor.bit_plane_slicer(self.current_image, bit_plane)
+        return self.current_image

@@ -116,3 +116,26 @@ def apply_contrast_stretch(image, r1, s1, r2, s2):
     np.clip(output_image, 0, 255, out=output_image)
 
     return output_image.astype(np.uint8)
+
+def bit_plane_slicer(image, bit_plane_number):
+    """
+    Extract a specific bit plane from an image.
+
+    Parameters:
+    image (numpy.ndarray): The image to process.
+    bit_plane (int): The specific bit plane to extract (0-7).
+
+    Returns:
+    numpy.ndarray: The extracted bit plane as a binary image.
+    """
+    # Convert image to grayscale if it is not
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    image = image.astype(np.uint8)
+
+    # Calculate the bit plane image
+    bit_plane_image = (image >> bit_plane_number) & 1
+    bit_plane_image *= 255  # Scale binary image to full intensity for visualization
+
+    return bit_plane_image
