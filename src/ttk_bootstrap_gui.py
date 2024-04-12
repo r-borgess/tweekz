@@ -72,12 +72,12 @@ class ImageEditorApp:
     def create_gamma_popup(self):
         popup = Toplevel(self.root)
         popup.title("Gamma Transformation")
-        popup.geometry("300x100")
+        popup.geometry("200x100")
 
         Label(popup, text="Gamma value:").pack(side="top", fill="x", pady=10)
 
         gamma_value_entry = Entry(popup)
-        gamma_value_entry.pack(side="top", fill="x")
+        gamma_value_entry.pack(side="top", fill="x", padx=60)
 
         apply_button = Button(popup, text="Apply", command=lambda: self.apply_gamma_and_close_popup(gamma_value_entry.get(), popup))
         apply_button.pack(side="bottom", pady=10)
@@ -92,6 +92,45 @@ class ImageEditorApp:
             messagebox.showerror("Gamma Transform", "Invalid gamma value. Please enter a valid number.")
         except Exception as e:
             messagebox.showerror("Gamma Transform", "Failed to transform the image.\n" + str(e))
+            popup.destroy()
+
+    def contrast_stretch_image(self):
+        self.create_contrast_popup()
+
+    def create_contrast_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Contrast Stretching")
+        popup.geometry("200x300")
+
+        Label(popup, text="r1 value:").pack(side="top", fill="x", pady=10)
+        r1_entry = Entry(popup)
+        r1_entry.pack(side="top", fill="x", padx=60)
+        Label(popup, text="s1 value:").pack(side="top", fill="x", pady=10)
+        s1_entry = Entry(popup)
+        s1_entry.pack(side="top", fill="x", padx=60)
+        Label(popup, text="r2 value:").pack(side="top", fill="x", pady=10)
+        r2_entry = Entry(popup)
+        r2_entry.pack(side="top", fill="x", padx=60)
+        Label(popup, text="s2 value:").pack(side="top", fill="x", pady=10)
+        s2_entry = Entry(popup)
+        s2_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_contrast_and_close_popup(r1_entry.get(), s1_entry.get(), r2_entry.get(), s2_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_contrast_and_close_popup(self, r1_value, s1_value, r2_value, s2_value, popup):
+        try:
+            r1_value = float(r1_value)
+            s1_value = float(s1_value)
+            r2_value = float(r2_value)
+            s2_value = float(s2_value)
+            np_image = self.image_processor.contrast_stretch_image(r1_value, s1_value, r2_value, s2_value)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Contrast Stretch", "Invalid values. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Contrast Stretch", "Failed to transform the image.\n" + str(e))
             popup.destroy()
 
     def restore_image(self):

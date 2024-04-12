@@ -79,3 +79,40 @@ def apply_gamma_transformation(image, gamma):
     # Scale back to original range
     corrected_img = np.uint8(corrected_img * 255)
     return corrected_img
+
+def apply_contrast_stretch(image, r1, s1, r2, s2):
+    """
+    Apply contrast enhancement to an image using piecewise-linear transformation.
+
+    Parameters:
+    - image: Input image (numpy.ndarray).
+    - r1, s1, r2, s2: Coordinates of the two points defining the piecewise-linear transformation.
+
+    Returns:
+    - numpy.ndarray: The contrast-enhanced image.
+    """
+    # Validate inputs (omitted for brevity)
+
+    # Initialize the output image
+    output_image = np.zeros_like(image)
+
+    # Define the transformation function for each segment
+    # Calculate slopes of each segment
+    slope1 = s1 / r1 if r1 != 0 else 0
+    slope2 = (s2 - s1) / (r2 - r1)
+    slope3 = (255 - s2) / (255 - r2) if r2 != 255 else 0
+
+    # Apply the transformation
+    for i in range(256):
+        if i < r1:
+            trans_val = slope1 * i
+        elif i < r2:
+            trans_val = slope2 * (i - r1) + s1
+        else:
+            trans_val = slope3 * (i - r2) + s2
+        output_image[image == i] = trans_val
+
+    # Ensure the output values are valid
+    np.clip(output_image, 0, 255, out=output_image)
+
+    return output_image.astype(np.uint8)
