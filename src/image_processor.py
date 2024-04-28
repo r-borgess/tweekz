@@ -139,3 +139,43 @@ def bit_plane_slicer(image, bit_plane_number):
     bit_plane_image *= 255  # Scale binary image to full intensity for visualization
 
     return bit_plane_image
+
+def histogram_equalization(image):
+    """
+    Apply histogram equalization to the luminance channel of a color image and return the histograms before and after the process.
+
+    Parameters:
+    image (numpy.ndarray): The input color image in RGB format.
+
+    Returns:
+    tuple: A tuple containing the equalized image, histogram of the original luminance, and histogram of the equalized luminance.
+    """
+    # Convert RGB image to HSV
+    hsv_image = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+    h, s, v = cv2.split(hsv_image)
+
+    # Calculate histogram of the original luminance (value channel)
+    original_hist, _ = np.histogram(v.flatten(), bins=256, range=[0,256])
+
+    # Normalize the histogram
+    hist_normalized = original_hist / float(np.sum(original_hist))
+
+    # Calculate the cumulative distribution function
+    cdf = hist_normalized.cumsum()
+
+    # Normalize the CDF to be in the range of 0-255
+    cdf_normalized = np.floor(255 * cdf / cdf[-1]).astype('uint8')
+
+    # Use the normalized CDF to set the new luminance values
+    v_equalized = cdf_normalized[v.flatten()].reshape(v.shape)
+
+    # Reconstruct the HSV image using the equalized luminance
+    hsv_equalized = cv2.merge([h, s, v_equalized])
+
+    # Convert the HSV image back to RGB
+    equalized_image = cv2.cvtColor(hsv_equalized, cv2.COLOR_HSV2RGB)
+
+    # Calculate histogram of the equalized luminance
+    equalized_hist, _ = np.histogram(v_equalized.flatten(), bins=256, range=[0,256])
+
+    return equalized_image, original_hist, equalized_hist

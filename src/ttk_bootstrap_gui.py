@@ -1,6 +1,8 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as tkb
 from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk
 import cv2
 from image_controller import ImageProcessor
@@ -161,6 +163,37 @@ class ImageEditorApp:
             messagebox.showerror("Bit plane extraction", "Failed to extract.\n" + str(e))
             popup.destroy()
 
+    def equalize_histogram_image(self):
+        try:
+            equalized_image, original_hist, equalized_hist = self.image_processor.equalize_histogram()
+            self.root.after(0, self.show_histogram_results, equalized_image, original_hist, equalized_hist)
+            np_image = equalized_image
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            messagebox.showerror("Histogram Equalization", "Failed to equalize the image.\n" + str(e))
+
+    def show_histogram_results(self, equalized_image, original_hist, equalized_hist):
+        popup = Toplevel(self.root)
+        popup.title("Histogram Equalization Results")
+        popup.geometry("800x600")
+
+        # Plot histograms
+        fig = Figure(figsize=(6, 4), dpi=100)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        ax1.bar(range(len(original_hist)), original_hist.ravel(), color='gray')
+        ax1.set_title('Original Histogram')
+        ax1.set_xlim([0, 256])
+
+        ax2.bar(range(len(equalized_hist)), equalized_hist.ravel(), color='gray')
+        ax2.set_title('Equalized Histogram')
+        ax2.set_xlim([0, 256])
+
+        canvas = FigureCanvasTkAgg(fig, master=popup)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side="bottom", fill="both", expand=True)
+    
     def restore_image(self):
         try:
             np_image = self.image_processor.restore_image()

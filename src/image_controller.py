@@ -32,3 +32,7 @@ class ImageProcessor:
     def extract_bit_plane(self, bit_plane):
         self.current_image = image_processor.bit_plane_slicer(self.current_image, bit_plane)
         return self.current_image
+    
+    def equalize_histogram(self):
+        self.current_image, original_hist, equalized_hist = image_processor.histogram_equalization(self.current_image)
+        return self.current_image, original_hist, equalized_hist

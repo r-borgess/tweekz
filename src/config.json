@@ -1,0 +1,9 @@
+{
+    "themename": "darkly",
+    "default_file_extension": ".jpg",
+    "window_title": "tweekz",
+    "menu_options": {
+        "file": ["Open", "Save", "Exit"],
+        "tools": ["Blackout", "Gamma_Transform", "Contrast_Stretch", "Bit_Plane_Extract", "Equalize_Histogram", "Restore"]
+    }
+}
