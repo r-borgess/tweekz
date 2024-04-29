@@ -56,3 +56,7 @@ class ImageProcessor:
     def apply_median_filter(self, kernel_size):
         self.current_image = image_processor.median_filter(self.current_image, kernel_size)
         return self.current_image
+    
+    def apply_laplacian_filter(self):
+        self.current_image, laplacian, laplacian_adjusted = image_processor.laplacian_filter(self.current_image)
+        return self.current_image, laplacian, laplacian_adjusted

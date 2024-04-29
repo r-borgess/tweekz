@@ -374,3 +374,59 @@ def median_filter(image, kernel_size):
 
     return filtered_image
 
+def apply_laplacian_kernel(image, kernel):
+    img_height, img_width = image.shape
+    laplacian_image = np.zeros_like(image, dtype=float)
+
+    # Apply the Laplacian kernel
+    for y in range(1, img_height - 1):
+        for x in range(1, img_width - 1):
+            laplacian_image[y, x] = np.sum(kernel * image[y-1:y+2, x-1:x+2])
+
+    return laplacian_image
+
+def laplacian_filter(image):
+    # Define the Laplacian kernel
+    kernel = np.array([[1, 1, 1], [1, -8, 1], [1, 1, 1]], dtype=np.float32)
+    w = -1.2  # Weight scalar for the Laplacian
+
+    if len(image.shape) == 3:
+        # Process each channel separately if it's a color image
+        channels = cv2.split(image)
+    else:
+        # Make it a list of one channel if it's grayscale
+        channels = [image]
+
+    sharpened_channels = []
+    laplacian_channels = []
+    contrast_channels = []
+
+    for channel in channels:
+        # Apply the Laplacian kernel using filter2D
+        laplacian_channel = cv2.filter2D(channel, -1, kernel * w)
+
+        # Contrast stretching
+        min_val, max_val = laplacian_channel.min(), laplacian_channel.max()
+        contrast_channel = (laplacian_channel - min_val) * (255 / (max_val - min_val))
+        contrast_channel = np.clip((contrast_channel * 0.5) + 128, 0, 255).astype(np.uint8)
+
+        # Sharpening the image
+        sharpened_channel = cv2.add(channel, laplacian_channel)
+        sharpened_channel = np.clip(sharpened_channel, 0, 255).astype(np.uint8)
+
+        sharpened_channels.append(sharpened_channel)
+        laplacian_channels.append(laplacian_channel)
+        contrast_channels.append(contrast_channel)
+
+    # Merge channels back if it was a color image
+    if len(image.shape) == 3:
+        sharpened_image = cv2.merge(sharpened_channels)
+        laplacian_image = cv2.merge([np.clip(ch, 0, 255).astype(np.uint8) for ch in laplacian_channels])
+        contrast_stretched = cv2.merge(contrast_channels)
+    else:
+        sharpened_image = sharpened_channels[0]
+        laplacian_image = laplacian_channels[0].astype(np.uint8)
+        contrast_stretched = contrast_channels[0]
+
+    return sharpened_image, laplacian_image, contrast_stretched
+

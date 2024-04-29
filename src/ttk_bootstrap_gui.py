@@ -62,7 +62,7 @@ class ImageEditorApp:
         sharpening_menu = Menu(spatial_menu, tearoff=False)
         spatial_menu.add_cascade(label="Sharpening", menu=sharpening_menu)
         for option in self.config["menu_options"]["spatial_filtering"]["sharpening"]:
-            sharpening_menu.add_command(label=option, command=print(self, option.lower() + "_image"))
+            sharpening_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
 
     def open_image(self):
             file_path = filedialog.askopenfilename()
@@ -190,13 +190,13 @@ class ImageEditorApp:
     def equalize_histogram_image(self):
         try:
             equalized_image, original_hist, equalized_hist = self.image_processor.equalize_histogram()
-            self.root.after(0, self.show_histogram_results, equalized_image, original_hist, equalized_hist)
+            self.root.after(0, self.show_histogram_results, original_hist, equalized_hist)
             np_image = equalized_image
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
             messagebox.showerror("Histogram Equalization", "Failed to equalize the image.\n" + str(e))
 
-    def show_histogram_results(self, equalized_image, original_hist, equalized_hist):
+    def show_histogram_results(self, original_hist, equalized_hist):
         popup = Toplevel(self.root)
         popup.title("Histogram Equalization Results")
         popup.geometry("800x600")
@@ -376,6 +376,39 @@ class ImageEditorApp:
         except Exception as e:
             messagebox.showerror("Median Filter", "Failed to transform the image.\n" + str(e))
             popup.destroy()
+
+    def laplacian_filter_image(self):
+        try:
+            sharpened_image, raw_laplacian, adjusted_laplacian = self.image_processor.apply_laplacian_filter()
+            self.root.after(0, self.show_laplacian_results, raw_laplacian, adjusted_laplacian)
+            np_image = sharpened_image
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            messagebox.showerror("Laplacian Filter", "Failed to apply Laplacian filter.\n" + str(e))
+    
+    def show_laplacian_results(self, raw_laplacian, adjusted_laplacian):
+        popup = Toplevel(self.root)
+        popup.title("Laplacian Filter Results")
+        popup.geometry("800x600")
+
+        # Plot results
+        fig = Figure(figsize=(6, 4), dpi=100)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        # Displaying the raw Laplacian
+        ax1.imshow(raw_laplacian, cmap='gray')
+        ax1.set_title('Raw Laplacian')
+        ax1.axis('off')  # Turn off axis numbers and ticks
+
+        # Displaying the adjusted Laplacian
+        ax2.imshow(adjusted_laplacian, cmap='gray')
+        ax2.set_title('Adjusted Laplacian')
+        ax2.axis('off')
+
+        canvas = FigureCanvasTkAgg(fig, master=popup)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side="bottom", fill="both", expand=True)
 
     def display_image(self, np_image):
         # Convert the NumPy image to a PIL image
