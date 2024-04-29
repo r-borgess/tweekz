@@ -10,6 +10,7 @@ This tool is designed as a platform for demonstrating and executing image proces
 - Save modified images back to your file system.
 - Apply a zero intensity transformation to all pixels.
 - Power law, contrast stretching and bit plane extraction
+- Histogram equalization
 - Restore the original state of any modified image.
 
 ## Getting Started
