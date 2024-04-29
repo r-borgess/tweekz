@@ -216,3 +216,161 @@ def intensity_slicing_pseudocolor(image, num_ranges, cmap_name='viridis'):
         colored_image[mask] = color
 
     return colored_image
+
+def average_filter(image, kernel_size=3):
+    """
+    Manually apply an average filter to the image using numpy operations.
+
+    Parameters:
+    image (numpy.ndarray): The input image, which can be grayscale or color.
+    kernel_size (int): The size of the kernel (both width and height) for the averaging filter.
+
+    Returns:
+    numpy.ndarray: The filtered image after applying the average filter manually.
+    """
+    # Check if the kernel size is odd to ensure a valid anchor point
+    if kernel_size % 2 == 0:
+        raise ValueError("Kernel size must be odd to ensure a valid anchor point.")
+
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
+    
+    # Pad the image with border replicating the edge pixels to handle borders
+    pad_size = kernel_size // 2
+    if len(image.shape) == 3:  # Color image
+        padded_image = np.pad(image, ((pad_size, pad_size), (pad_size, pad_size), (0, 0)), 'edge')
+    else:  # Grayscale image
+        padded_image = np.pad(image, pad_size, 'edge')
+
+    # Create an empty array to store the filtered image
+    filtered_image = np.zeros_like(image)
+
+    # Perform the averaging filter
+    for y in range(height):
+        for x in range(width):
+            # Define the current region to take the average
+            region = padded_image[y:y + kernel_size, x:x + kernel_size]
+            # Compute the mean for the region and assign it to the corresponding pixel
+            filtered_image[y, x] = np.mean(region, axis=(0, 1))
+
+    return filtered_image
+
+def min_filter(image, kernel_size):
+    """
+    Manually apply a minimum filter to the image using numpy operations.
+
+    Parameters:
+    image (numpy.ndarray): The input image, which can be grayscale or color.
+    kernel_size (int): The size of the kernel (both width and height) for the minimum filter.
+
+    Returns:
+    numpy.ndarray: The filtered image after applying the minimum filter manually.
+    """
+    # Check if the kernel size is odd to ensure a valid anchor point
+    if kernel_size % 2 == 0:
+        raise ValueError("Kernel size must be odd to ensure a valid anchor point.")
+
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
+    
+    # Pad the image with border replicating the edge pixels to handle borders
+    pad_size = kernel_size // 2
+    if len(image.shape) == 3:  # Color image
+        padded_image = np.pad(image, ((pad_size, pad_size), (pad_size, pad_size), (0, 0)), 'edge')
+    else:  # Grayscale image
+        padded_image = np.pad(image, pad_size, 'edge')
+
+    # Create an empty array to store the filtered image
+    filtered_image = np.zeros_like(image)
+
+    # Perform the minimum filter
+    for y in range(height):
+        for x in range(width):
+            # Define the current region to take the minimum
+            region = padded_image[y:y + kernel_size, x:x + kernel_size]
+            # Compute the minimum for the region and assign it to the corresponding pixel
+            filtered_image[y, x] = np.min(region, axis=(0, 1))
+
+    return filtered_image
+
+def max_filter(image, kernel_size):
+    """
+    Manually apply a maximum filter to the image using numpy operations.
+
+    Parameters:
+    image (numpy.ndarray): The input image, which can be grayscale or color.
+    kernel_size (int): The size of the kernel (both width and height) for the maximum filter.
+
+    Returns:
+    numpy.ndarray: The filtered image after applying the maximum filter manually.
+    """
+    # Check if the kernel size is odd to ensure a valid anchor point
+    if kernel_size % 2 == 0:
+        raise ValueError("Kernel size must be odd to ensure a valid anchor point.")
+
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
+    
+    # Pad the image with border replicating the edge pixels to handle borders
+    pad_size = kernel_size // 2
+    if len(image.shape) == 3:  # Color image
+        padded_image = np.pad(image, ((pad_size, pad_size), (pad_size, pad_size), (0, 0)), 'edge')
+    else:  # Grayscale image
+        padded_image = np.pad(image, pad_size, 'edge')
+
+    # Create an empty array to store the filtered image
+    filtered_image = np.zeros_like(image)
+
+    # Perform the maximum filter
+    for y in range(height):
+        for x in range(width):
+            # Define the current region to take the minimum
+            region = padded_image[y:y + kernel_size, x:x + kernel_size]
+            # Compute the maximum for the region and assign it to the corresponding pixel
+            filtered_image[y, x] = np.max(region, axis=(0, 1))
+
+    return filtered_image
+
+def median_filter(image, kernel_size):
+    """
+    Manually apply a median filter to the image using numpy operations.
+
+    Parameters:
+    image (numpy.ndarray): The input image, which can be grayscale or color.
+    kernel_size (int): The size of the kernel (both width and height) for the median filter.
+
+    Returns:
+    numpy.ndarray: The filtered image after applying the median filter manually.
+    """
+    # Check if the kernel size is odd to ensure a valid anchor point
+    if kernel_size % 2 == 0:
+        raise ValueError("Kernel size must be odd to ensure a valid anchor point.")
+
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
+    
+    # Pad the image to handle borders
+    pad_size = kernel_size // 2
+    if len(image.shape) == 3:  # Color image
+        padded_image = np.pad(image, ((pad_size, pad_size), (pad_size, pad_size), (0, 0)), 'reflect')
+    else:  # Grayscale image
+        padded_image = np.pad(image, pad_size, 'reflect')
+
+    # Create an empty array to store the filtered image
+    filtered_image = np.zeros_like(image)
+
+    # Perform the median filter
+    for y in range(height):
+        for x in range(width):
+            # Define the current region to take the median
+            region = padded_image[y:y + kernel_size, x:x + kernel_size]
+            # Compute the median for the region and assign it to the corresponding pixel
+            # Handle color and grayscale separately
+            if len(image.shape) == 3:
+                for channel in range(3):
+                    filtered_image[y, x, channel] = np.median(region[:, :, channel])
+            else:
+                filtered_image[y, x] = np.median(region)
+
+    return filtered_image
+

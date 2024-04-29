@@ -40,3 +40,19 @@ class ImageProcessor:
     def intensity_slicing_pseudocolor(self, num_ranges, cmap_name):
         self.current_image = image_processor.intensity_slicing_pseudocolor(self.current_image, num_ranges, cmap_name)
         return self.current_image
+    
+    def apply_average_filter(self, kernel_size):
+        self.current_image = image_processor.average_filter(self.current_image, kernel_size)
+        return self.current_image
+    
+    def apply_min_filter(self, kernel_size):
+        self.current_image = image_processor.min_filter(self.current_image, kernel_size)
+        return self.current_image
+    
+    def apply_max_filter(self, kernel_size):
+        self.current_image = image_processor.max_filter(self.current_image, kernel_size)
+        return self.current_image
+    
+    def apply_median_filter(self, kernel_size):
+        self.current_image = image_processor.median_filter(self.current_image, kernel_size)
+        return self.current_image

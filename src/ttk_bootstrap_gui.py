@@ -50,13 +50,13 @@ class ImageEditorApp:
         smoothing_menu = Menu(spatial_menu, tearoff=False)
         spatial_menu.add_cascade(label="Smoothing", menu=smoothing_menu)
         for option in self.config["menu_options"]["spatial_filtering"]["smoothing"]:
-            smoothing_menu.add_command(label=option, command=print(self, option.lower() + "_image"))
+            smoothing_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
 
         # Order-Statistics Submenu
         statistics_menu = Menu(spatial_menu, tearoff=False)
         spatial_menu.add_cascade(label="Order Statistics", menu=statistics_menu)
         for option in self.config["menu_options"]["spatial_filtering"]["order-statistics"]:
-            statistics_menu.add_command(label=option, command=print(self, option.lower() + "_image"))
+            statistics_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
 
         # Sharpening Submenu
         sharpening_menu = Menu(spatial_menu, tearoff=False)
@@ -263,6 +263,118 @@ class ImageEditorApp:
             messagebox.showerror("Intensity Slicing", f"Invalid input: {str(e)}")
         except Exception as e:
             messagebox.showerror("Intensity Slicing", f"Failed to apply intensity slicing.\n{str(e)}")
+            popup.destroy()
+
+    def average_filter_image(self):
+        self.create_average_filter_popup()
+
+    def create_average_filter_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Average Filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_average_filter_and_close_popup(kernel_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_average_filter_and_close_popup(self, kernel_size, popup):
+        try:
+            kernel_size = int(kernel_size)
+            np_image = self.image_processor.apply_average_filter(kernel_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Average Filter", "Invalid kernel size value. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Average Filter", "Failed to transform the image.\n" + str(e))
+            popup.destroy()
+
+    def min_filter_image(self):
+        self.create_min_filter_popup()
+
+    def create_min_filter_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Min Filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_min_filter_and_close_popup(kernel_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_min_filter_and_close_popup(self, kernel_size, popup):
+        try:
+            kernel_size = int(kernel_size)
+            np_image = self.image_processor.apply_min_filter(kernel_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Min Filter", "Invalid kernel size value. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Min Filter", "Failed to transform the image.\n" + str(e))
+            popup.destroy()
+
+    def max_filter_image(self):
+        self.create_max_filter_popup()
+
+    def create_max_filter_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Max Filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_max_filter_and_close_popup(kernel_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_max_filter_and_close_popup(self, kernel_size, popup):
+        try:
+            kernel_size = int(kernel_size)
+            np_image = self.image_processor.apply_max_filter(kernel_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Max Filter", "Invalid kernel size value. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Max Filter", "Failed to transform the image.\n" + str(e))
+            popup.destroy()
+
+    def median_filter_image(self):
+        self.create_median_filter_popup()
+
+    def create_median_filter_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Median Filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_median_filter_and_close_popup(kernel_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_median_filter_and_close_popup(self, kernel_size, popup):
+        try:
+            kernel_size = int(kernel_size)
+            np_image = self.image_processor.apply_median_filter(kernel_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Median Filter", "Invalid kernel size value. Please enter a valid number.")
+        except Exception as e:
+            messagebox.showerror("Median Filter", "Failed to transform the image.\n" + str(e))
             popup.destroy()
 
     def display_image(self, np_image):
