@@ -1,6 +1,7 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as tkb
-from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button
+from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button, StringVar
+from tkinter.ttk import Combobox
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk
@@ -25,6 +26,7 @@ class ImageEditorApp:
         menu_bar = Menu(self.root)
         self.root.config(menu=menu_bar)
 
+        # File Menu
         file_menu = Menu(menu_bar, tearoff=False)
         menu_bar.add_cascade(label="File", menu=file_menu)
         for option in self.config["menu_options"]["file"]:
@@ -34,11 +36,33 @@ class ImageEditorApp:
                 # Assuming open_image and save_image methods for simplicity
                 file_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
 
-        tools_menu = Menu(menu_bar, tearoff=False)
-        menu_bar.add_cascade(label="Tools", menu=tools_menu)
-        for option in self.config["menu_options"]["tools"]:
-            tools_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
+        # Intensity Transformations Menu
+        intensity_menu = Menu(menu_bar, tearoff=False)
+        menu_bar.add_cascade(label="Intensity Transformations", menu=intensity_menu)
+        for option in self.config["menu_options"]["intensity_transformations"]:
+            intensity_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
 
+        # Spatial Filtering Menu
+        spatial_menu = Menu(menu_bar, tearoff=False)
+        menu_bar.add_cascade(label="Spatial Filtering", menu=spatial_menu)
+
+        # Smoothing Submenu
+        smoothing_menu = Menu(spatial_menu, tearoff=False)
+        spatial_menu.add_cascade(label="Smoothing", menu=smoothing_menu)
+        for option in self.config["menu_options"]["spatial_filtering"]["smoothing"]:
+            smoothing_menu.add_command(label=option, command=print(self, option.lower() + "_image"))
+
+        # Order-Statistics Submenu
+        statistics_menu = Menu(spatial_menu, tearoff=False)
+        spatial_menu.add_cascade(label="Order Statistics", menu=statistics_menu)
+        for option in self.config["menu_options"]["spatial_filtering"]["order-statistics"]:
+            statistics_menu.add_command(label=option, command=print(self, option.lower() + "_image"))
+
+        # Sharpening Submenu
+        sharpening_menu = Menu(spatial_menu, tearoff=False)
+        spatial_menu.add_cascade(label="Sharpening", menu=sharpening_menu)
+        for option in self.config["menu_options"]["spatial_filtering"]["sharpening"]:
+            sharpening_menu.add_command(label=option, command=print(self, option.lower() + "_image"))
 
     def open_image(self):
             file_path = filedialog.askopenfilename()
@@ -200,6 +224,46 @@ class ImageEditorApp:
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
             messagebox.showerror("Restore Image", "Failed to restore the image.\n" + str(e))
+
+    def intensity_slice_image(self):
+        self.create_intensity_slicing_popup()
+
+    def create_intensity_slicing_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Intensity Slicing")
+        popup.geometry("300x200")
+
+        Label(popup, text="Number of Ranges:").pack(side="top", fill="x", pady=10)
+
+        num_ranges_entry = Entry(popup)
+        num_ranges_entry.pack(side="top", fill="x", padx=50)
+
+        Label(popup, text="Color Map:").pack(side="top", fill="x", pady=5)
+
+        # Combo box for color map selection
+        cmap_var = StringVar()
+        cmap_combo = Combobox(popup, textvariable=cmap_var, state='readonly')
+        cmap_combo['values'] = ('viridis', 'plasma', 'inferno', 'magma', 'cividis', 'hot', 'cool', 'spring', 'summer', 'autumn', 'winter', 'jet', 'turbo')
+        cmap_combo.current(0)  # set the selected item
+        cmap_combo.pack(side="top", fill="x", padx=50)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_intensity_slicing_and_close_popup(num_ranges_entry.get(), cmap_var.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_intensity_slicing_and_close_popup(self, num_ranges, cmap_name, popup):
+        try:
+            num_ranges = int(num_ranges)
+            if num_ranges < 1 or num_ranges > 255:
+                raise ValueError("Number of ranges must be between 1 and 255.")
+
+            np_image = self.image_processor.intensity_slicing_pseudocolor(num_ranges, cmap_name)
+            self.root.after(0, self.display_image, np_image)  # Assumes a method to display images on the main GUI
+            popup.destroy()
+        except ValueError as e:
+            messagebox.showerror("Intensity Slicing", f"Invalid input: {str(e)}")
+        except Exception as e:
+            messagebox.showerror("Intensity Slicing", f"Failed to apply intensity slicing.\n{str(e)}")
+            popup.destroy()
 
     def display_image(self, np_image):
         # Convert the NumPy image to a PIL image

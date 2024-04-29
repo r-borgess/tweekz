@@ -36,3 +36,7 @@ class ImageProcessor:
     def equalize_histogram(self):
         self.current_image, original_hist, equalized_hist = image_processor.histogram_equalization(self.current_image)
         return self.current_image, original_hist, equalized_hist
+    
+    def intensity_slicing_pseudocolor(self, num_ranges, cmap_name):
+        self.current_image = image_processor.intensity_slicing_pseudocolor(self.current_image, num_ranges, cmap_name)
+        return self.current_image

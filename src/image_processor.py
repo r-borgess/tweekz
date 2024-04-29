@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 original_image = None
 
@@ -179,3 +180,39 @@ def histogram_equalization(image):
     equalized_hist, _ = np.histogram(v_equalized.flatten(), bins=256, range=[0,256])
 
     return equalized_image, original_hist, equalized_hist
+
+def intensity_slicing_pseudocolor(image, num_ranges, cmap_name='viridis'):
+    """
+    Apply intensity slicing with automatic pseudocoloring to a grayscale image based on the selected color map.
+    The intensity range is automatically divided into equal parts.
+
+    Parameters:
+    - image (numpy.ndarray): The input grayscale image.
+    - num_ranges (int): Number of equal intensity ranges to create.
+    - cmap_name (str): Name of the Matplotlib colormap to use.
+
+    Returns:
+    - numpy.ndarray: The pseudocolored image.
+    """
+    # Ensure the image is in grayscale
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Create a blank RGB image
+    colored_image = np.zeros((image.shape[0], image.shape[1], 3), dtype=np.uint8)
+
+    # Calculate range boundaries
+    step = 256 / num_ranges
+    ranges = [(int(i * step), int((i + 1) * step) - 1) for i in range(num_ranges)]
+
+    # Generate colors using the specified colormap
+    cmap = plt.get_cmap(cmap_name)
+    colors = [cmap(int(i * 255 / (num_ranges - 1)))[:3] for i in range(num_ranges)]
+    colors = [(int(color[2]*255), int(color[1]*255), int(color[0]*255)) for color in colors]  # Convert to BGR format
+
+    # Apply each color to the corresponding range
+    for range_, color in zip(ranges, colors):
+        mask = (image >= range_[0]) & (image <= range_[1])
+        colored_image[mask] = color
+
+    return colored_image
