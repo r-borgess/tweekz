@@ -7,6 +7,18 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk
 import cv2
 from image_controller import ImageProcessor
+import logging
+
+def setup_logging():
+    logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
+                        format='%(name)s - %(levelname)s - %(message)s')
+
+def handle_error(self, error_message, exception=None):
+    if exception:
+        logging.error(f"{error_message}: {str(exception)}")
+    else:
+        logging.error(error_message)
+    messagebox.showerror("Error", error_message)
 
 class ImageEditorApp:
     def __init__(self, root, config):
@@ -22,47 +34,28 @@ class ImageEditorApp:
     def setup_ui(self):
         self.root.title(self.config["window_title"])
         self.root.state('zoomed')
-
         menu_bar = Menu(self.root)
         self.root.config(menu=menu_bar)
+        self.create_menus(menu_bar, self.config['menu_options'])
 
-        # File Menu
-        file_menu = Menu(menu_bar, tearoff=False)
-        menu_bar.add_cascade(label="File", menu=file_menu)
-        for option in self.config["menu_options"]["file"]:
-            if option == "Exit":
-                file_menu.add_command(label=option, command=self.root.quit)
-            else:
-                # Assuming open_image and save_image methods for simplicity
-                file_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
-
-        # Intensity Transformations Menu
-        intensity_menu = Menu(menu_bar, tearoff=False)
-        menu_bar.add_cascade(label="Intensity Transformations", menu=intensity_menu)
-        for option in self.config["menu_options"]["intensity_transformations"]:
-            intensity_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
-
-        # Spatial Filtering Menu
-        spatial_menu = Menu(menu_bar, tearoff=False)
-        menu_bar.add_cascade(label="Spatial Filtering", menu=spatial_menu)
-
-        # Smoothing Submenu
-        smoothing_menu = Menu(spatial_menu, tearoff=False)
-        spatial_menu.add_cascade(label="Smoothing", menu=smoothing_menu)
-        for option in self.config["menu_options"]["spatial_filtering"]["smoothing"]:
-            smoothing_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
-
-        # Order-Statistics Submenu
-        statistics_menu = Menu(spatial_menu, tearoff=False)
-        spatial_menu.add_cascade(label="Order Statistics", menu=statistics_menu)
-        for option in self.config["menu_options"]["spatial_filtering"]["order-statistics"]:
-            statistics_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
-
-        # Sharpening Submenu
-        sharpening_menu = Menu(spatial_menu, tearoff=False)
-        spatial_menu.add_cascade(label="Sharpening", menu=sharpening_menu)
-        for option in self.config["menu_options"]["spatial_filtering"]["sharpening"]:
-            sharpening_menu.add_command(label=option, command=getattr(self, option.lower() + "_image"))
+    def create_menus(self, menu_bar, menu_config):
+        for menu_name, items in menu_config.items():
+            if isinstance(items, list):  # Check if the current item is a list
+                menu = Menu(menu_bar, tearoff=False)
+                menu_bar.add_cascade(label=menu_name.replace('_', ' '), menu=menu)
+                for item in items:
+                    if item == "Exit":  # Special handling for 'Exit'
+                        menu.add_command(label=item.replace('_', ' '), command=self.root.quit)
+                    else:
+                        method_name = item.lower() + '_image'
+                        if hasattr(self, method_name):  # Check if the method exists
+                            menu.add_command(label=item.replace('_', ' '), command=getattr(self, method_name))
+                        else:
+                            print(f"Warning: No method found for {item}")
+            elif isinstance(items, dict):  # Recursive call for nested menus
+                parent_menu = Menu(menu_bar, tearoff=False)
+                menu_bar.add_cascade(label=menu_name.replace('_', ' '), menu=parent_menu)
+                self.create_menus(parent_menu, items)
 
     def open_image(self):
             file_path = filedialog.askopenfilename()
@@ -71,7 +64,7 @@ class ImageEditorApp:
                     np_image = self.image_processor.load_image(file_path)
                     self.root.after(0, self.display_image, np_image)
                 except Exception as e:
-                    messagebox.showerror("Open Image", "Failed to open the image.\n" + str(e))
+                    self.handle_error("Failed to open the image", e)
 
     def save_image(self):
         if self.image_processor.current_image is not None:
@@ -90,7 +83,7 @@ class ImageEditorApp:
             np_image = self.image_processor.blackout_image()
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
-            messagebox.showerror("Blackout Image", "Failed to blackout the image.\n" + str(e))
+            self.handle_error("Failed to blackout the image", e)
 
     def gamma_transform_image(self):
         self.create_gamma_popup()
@@ -117,7 +110,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Gamma Transform", "Invalid gamma value. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Gamma Transform", "Failed to transform the image.\n" + str(e))
+            self.handle_error("Failed to transform the image", e)
             popup.destroy()
 
     def contrast_stretch_image(self):
@@ -156,7 +149,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Contrast Stretch", "Invalid values. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Contrast Stretch", "Failed to transform the image.\n" + str(e))
+            self.handle_error("Failed to transform the image", e)
             popup.destroy()
 
     def bit_plane_extract_image(self):
@@ -184,7 +177,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Bit plane extraction", "Invalid plane value. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Bit plane extraction", "Failed to extract.\n" + str(e))
+            self.handle_error("Failed to extract bit plane from the image", e)
             popup.destroy()
 
     def equalize_histogram_image(self):
@@ -194,7 +187,7 @@ class ImageEditorApp:
             np_image = equalized_image
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
-            messagebox.showerror("Histogram Equalization", "Failed to equalize the image.\n" + str(e))
+            self.handle_error("Failed to equalize the image", e)
 
     def show_histogram_results(self, original_hist, equalized_hist):
         popup = Toplevel(self.root)
@@ -223,7 +216,7 @@ class ImageEditorApp:
             np_image = self.image_processor.restore_image()
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
-            messagebox.showerror("Restore Image", "Failed to restore the image.\n" + str(e))
+            self.handle_error("Failed to restore the image", e)
 
     def intensity_slice_image(self):
         self.create_intensity_slicing_popup()
@@ -262,7 +255,7 @@ class ImageEditorApp:
         except ValueError as e:
             messagebox.showerror("Intensity Slicing", f"Invalid input: {str(e)}")
         except Exception as e:
-            messagebox.showerror("Intensity Slicing", f"Failed to apply intensity slicing.\n{str(e)}")
+            self.handle_error("Failed to apply intensity slicing to the image", e)
             popup.destroy()
 
     def average_filter_image(self):
@@ -290,7 +283,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Average Filter", "Invalid kernel size value. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Average Filter", "Failed to transform the image.\n" + str(e))
+            self.handle_error("Failed to filter the image", e)
             popup.destroy()
 
     def min_filter_image(self):
@@ -318,7 +311,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Min Filter", "Invalid kernel size value. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Min Filter", "Failed to transform the image.\n" + str(e))
+            self.handle_error("Failed to filter the image", e)
             popup.destroy()
 
     def max_filter_image(self):
@@ -346,7 +339,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Max Filter", "Invalid kernel size value. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Max Filter", "Failed to transform the image.\n" + str(e))
+            self.handle_error("Failed to filter the image", e)
             popup.destroy()
 
     def median_filter_image(self):
@@ -374,7 +367,7 @@ class ImageEditorApp:
         except ValueError:
             messagebox.showerror("Median Filter", "Invalid kernel size value. Please enter a valid number.")
         except Exception as e:
-            messagebox.showerror("Median Filter", "Failed to transform the image.\n" + str(e))
+            self.handle_error("Failed to filter the image", e)
             popup.destroy()
 
     def laplacian_filter_image(self):
@@ -384,7 +377,7 @@ class ImageEditorApp:
             np_image = sharpened_image
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
-            messagebox.showerror("Laplacian Filter", "Failed to apply Laplacian filter.\n" + str(e))
+            self.handle_error("Failed to filter the image", e)
     
     def show_laplacian_results(self, raw_laplacian, adjusted_laplacian):
         popup = Toplevel(self.root)
