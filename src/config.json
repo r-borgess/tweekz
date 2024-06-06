@@ -5,10 +5,14 @@
     "menu_options": {
         "file": ["Open", "Save", "Restore", "Exit"],
         "intensity_transformations": ["Blackout", "Gamma_Transform", "Contrast_Stretch", "Bit_Plane_Extract", "Equalize_Histogram", "Intensity_Slice"],
-        "spatial_filtering": {
+        "spatial_domain": {
             "smoothing": ["Average_Filter"],
             "order-statistics": ["Min_Filter", "Max_Filter", "Median_Filter"],
             "sharpening": ["Laplacian_Filter"]
+        },
+        "frequency_domain": {
+            "fourier_transform": ["FT"],
+            "basic_filters": ["low_pass", "high_pass", "notch_reject"]
         }
     }
 }

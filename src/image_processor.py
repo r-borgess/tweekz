@@ -430,3 +430,49 @@ def laplacian_filter(image):
 
     return sharpened_image, laplacian_image, contrast_stretched
 
+def compute_fft_spectrum_and_phase(image):
+    if image is None:
+        return "Error: Image not loaded. Check the file path."
+    
+    # Check if the image is loaded properly
+    if len(image.shape) != 2:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Compute the 2D Fourier Transform of the image
+    f = np.fft.fftshift(np.fft.fft2(image))
+    
+    # Compute the magnitude spectrum
+    magnitude_spectrum = 20 * np.log(np.abs(f) + 1)  # Adding 1 to avoid log(0)
+    
+    # Compute the phase angle
+    phase_angle = np.angle(f)
+    
+    return magnitude_spectrum, phase_angle
+
+def compute_inverse_fft(magnitude_spectrum, phase_angle):
+    # Recompose the complex spectrum from the magnitude and phase
+    magnitude = np.exp(magnitude_spectrum / 20) - 1  # Inverting the log and scale transformation
+    complex_spectrum = magnitude * (np.cos(phase_angle) + 1j * np.sin(phase_angle))
+    
+    # Shift the zero frequency component back to the original configuration
+    f_ishift = np.fft.ifftshift(complex_spectrum)
+    
+    # Compute the Inverse FFT
+    img_back = np.fft.ifft2(f_ishift)
+    
+    # Get the real part of the image
+    img_back = np.real(img_back)
+    
+    # Normalize the image to 8-bit scale (0-255)
+    img_back = cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX)
+    img_back = np.uint8(img_back)
+    
+    return img_back
+
+def high_pass(image, radius):
+    
+    return image
+
+def low_pass(image, radius):
+    print("low pass")
+    return image

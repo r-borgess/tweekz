@@ -6,19 +6,9 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from PIL import Image, ImageTk
 import cv2
+import numpy as np
 from image_controller import ImageProcessor
 import logging
-
-def setup_logging():
-    logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
-                        format='%(name)s - %(levelname)s - %(message)s')
-
-def handle_error(self, error_message, exception=None):
-    if exception:
-        logging.error(f"{error_message}: {str(exception)}")
-    else:
-        logging.error(error_message)
-    messagebox.showerror("Error", error_message)
 
 class ImageEditorApp:
     def __init__(self, root, config):
@@ -30,6 +20,17 @@ class ImageEditorApp:
         self.img_label = Label(self.img_container)
         self.img_label.place(relx=0.5, rely=0.5, anchor=CENTER)  # Center the label in the container
         self.setup_ui()
+
+    def setup_logging():
+        logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
+                            format='%(name)s - %(levelname)s - %(message)s')
+
+    def handle_error(self, error_message, exception=None):
+        if exception:
+            logging.error(f"{error_message}: {str(exception)}")
+        else:
+            logging.error(error_message)
+        messagebox.showerror("Error", error_message)
 
     def setup_ui(self):
         self.root.title(self.config["window_title"])
@@ -378,7 +379,7 @@ class ImageEditorApp:
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
             self.handle_error("Failed to filter the image", e)
-    
+
     def show_laplacian_results(self, raw_laplacian, adjusted_laplacian):
         popup = Toplevel(self.root)
         popup.title("Laplacian Filter Results")
@@ -403,9 +404,113 @@ class ImageEditorApp:
         canvas.draw()
         canvas.get_tk_widget().pack(side="bottom", fill="both", expand=True)
 
+    def ft_image(self):
+        try:
+            magnitude_spectrum, phase_angle = self.image_processor.compute_fft_spectrum_and_phase()
+            self.root.after(0, self.show_fft_results, magnitude_spectrum, phase_angle)
+            np_image = magnitude_spectrum
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            self.handle_error("Failed to transform", e)
+
+    def ift_image(self, magnitude_spectrum, phase_angle):
+        try:
+            # Compute the inverse Fourier Transform
+            ift_image = self.image_processor.compute_inverse_fft(magnitude_spectrum, phase_angle)
+            np_image = ift_image
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            self.handle_error("Failed to compute IFT", e)
+
+    def show_fft_results(self, magnitude_spectrum, phase_angle):
+        popup = Toplevel(self.root)
+        popup.title("Fourier Transform Results")
+        popup.geometry("800x600")
+
+        # Plot results
+        fig = Figure(figsize=(6, 4), dpi=100)
+        ax1 = fig.add_subplot(121)
+        ax2 = fig.add_subplot(122)
+
+        ax1.imshow(magnitude_spectrum, cmap='gray')
+        ax1.set_title('Fourier spectrum')
+        ax1.axis('off')
+
+        ax2.imshow(phase_angle, cmap='gray')
+        ax2.set_title('Phase angle')
+        ax2.axis('off')
+
+        canvas = FigureCanvasTkAgg(fig, master=popup)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+
+        # Add a button to compute the inverse transform
+        btn_ift = Button(popup, text="Compute IFT", command=lambda: self.ift_image(magnitude_spectrum, phase_angle))
+        btn_ift.pack(side="bottom", pady=20)
+
+    def high_pass_image(self):
+        self.create_high_pass_popup()
+
+    def create_high_pass_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("High pass filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="radius size:").pack(side="top", fill="x", pady=10)
+
+        radius_size_entry = Entry(popup)
+        radius_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_high_pass_and_close_popup(radius_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_high_pass_and_close_popup(self, radius_size, popup):
+        try:
+            radius_size = float(radius_size)
+            np_image = self.image_processor.apply_high_pass(radius_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("High pass filter", "Invalid radius value. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to filter the image", e)
+            popup.destroy()
+
+    def low_pass_image(self):
+        self.create_low_pass_popup()
+
+    def create_low_pass_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Low pass filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="radius size:").pack(side="top", fill="x", pady=10)
+
+        radius_size_entry = Entry(popup)
+        radius_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_low_pass_and_close_popup(radius_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_low_pass_and_close_popup(self, radius_size, popup):
+        try:
+            radius_size = float(radius_size)
+            np_image = self.image_processor.apply_low_pass(radius_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Low pass filter", "Invalid radius value. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to filter the image", e)
+            popup.destroy()
+
     def display_image(self, np_image):
         # Convert the NumPy image to a PIL image
-        pil_image = Image.fromarray(cv2.cvtColor(np_image, cv2.COLOR_BGR2RGB))
+        if np_image.dtype != np.uint8:
+        # Normalize to [0, 1] if the data type is float
+            np_image = ((np_image - np_image.min()) / (np_image.max() - np_image.min()) * 255).astype(np.uint8)
+
+        pil_image = Image.fromarray(cv2.cvtColor(np_image.astype(np.uint8), cv2.COLOR_BGR2RGB))
 
         # Get screen size and image size
         screen_width = self.root.winfo_screenwidth()

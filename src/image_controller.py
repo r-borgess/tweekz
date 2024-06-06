@@ -60,3 +60,19 @@ class ImageProcessor:
     def apply_laplacian_filter(self):
         self.current_image, laplacian, laplacian_adjusted = image_processor.laplacian_filter(self.current_image)
         return self.current_image, laplacian, laplacian_adjusted
+    
+    def compute_fft_spectrum_and_phase(self):
+        self.current_image, phase_angle = image_processor.compute_fft_spectrum_and_phase(self.current_image)
+        return self.current_image, phase_angle
+    
+    def compute_inverse_fft(self, magnitude_spectrum, phase_angle):
+        self.current_image = image_processor.compute_inverse_fft(magnitude_spectrum, phase_angle)
+        return self.current_image
+    
+    def apply_high_pass(self, radius):
+        self.current_image = image_processor.high_pass(self.current_image, radius)
+        return self.current_image
+    
+    def apply_low_pass(self, radius):
+        self.current_image = image_processor.low_pass(self.current_image, radius)
+        return self.current_image
