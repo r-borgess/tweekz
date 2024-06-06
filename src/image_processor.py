@@ -470,8 +470,49 @@ def compute_inverse_fft(magnitude_spectrum, phase_angle):
     return img_back
 
 def high_pass(image, radius):
-    
-    return image
+    """
+    Applies a high pass filter to the input image.
+
+    Parameters:
+    - image: Input image in which the high pass filter is to be applied.
+    - radius: The radius size for the high pass filter.
+
+    Returns:
+    - Filtered image with the high pass filter applied.
+    """
+    # Convert the image to grayscale if it is not already
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Convert the image to the frequency domain using Fourier Transform
+    dft = cv2.dft(np.float32(image), flags=cv2.DFT_COMPLEX_OUTPUT)
+    dft_shift = np.fft.fftshift(dft)
+
+    # Get the image dimensions
+    rows, cols = image.shape
+    crow, ccol = rows // 2, cols // 2
+
+    # Create a mask with the high pass filter
+    mask = np.ones((rows, cols, 2), np.uint8)
+    r = radius
+    center = (crow, ccol)
+    x, y = np.ogrid[:rows, :cols]
+    mask_area = (x - center[0])**2 + (y - center[1])**2 <= r*r
+    mask[mask_area] = 0
+
+    # Apply the mask to the DFT shifted image
+    fshift = dft_shift * mask
+
+    # Inverse Fourier Transform to get the image back in spatial domain
+    f_ishift = np.fft.ifftshift(fshift)
+    img_back = cv2.idft(f_ishift)
+    img_back = cv2.magnitude(img_back[:, :, 0], img_back[:, :, 1])
+
+    # Normalize the result to the range [0, 255]
+    cv2.normalize(img_back, img_back, 0, 255, cv2.NORM_MINMAX)
+    img_back = np.uint8(img_back)
+
+    return img_back
 
 def low_pass(image, radius):
     print("low pass")
