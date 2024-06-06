@@ -446,13 +446,18 @@ def compute_fft_spectrum_and_phase(image):
     
     # Compute the phase angle
     phase_angle = np.angle(f)
+    #print(phase_angle)
     
-    return magnitude_spectrum, phase_angle
+    return magnitude_spectrum, phase_angle, f
 
-def compute_inverse_fft(magnitude_spectrum, phase_angle):
+def compute_inverse_fft(magnitude_spectrum, phase_angle=None):
     # Recompose the complex spectrum from the magnitude and phase
     magnitude = np.exp(magnitude_spectrum / 20) - 1  # Inverting the log and scale transformation
-    complex_spectrum = magnitude * (np.cos(phase_angle) + 1j * np.sin(phase_angle))
+    
+    if phase_angle is not None:
+        complex_spectrum = magnitude * (np.cos(phase_angle) + 1j * np.sin(phase_angle))
+    else:
+        complex_spectrum = magnitude
     
     # Shift the zero frequency component back to the original configuration
     f_ishift = np.fft.ifftshift(complex_spectrum)
@@ -466,6 +471,8 @@ def compute_inverse_fft(magnitude_spectrum, phase_angle):
     # Normalize the image to 8-bit scale (0-255)
     img_back = cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX)
     img_back = np.uint8(img_back)
+
+    #print("subtraction = " + str(magnitude - img_back))
     
     return img_back
 
@@ -557,4 +564,41 @@ def low_pass(image, radius):
     cv2.normalize(img_back, img_back, 0, 255, cv2.NORM_MINMAX)
     img_back = np.uint8(img_back)
 
+    return img_back
+
+def notch_reject(magnitude_log, fft, notch_points):
+    # Convert log-magnitude back to linear scale if needed
+    magnitude = np.exp(magnitude_log / 20) - 1  # Only use if fft_image is in log scale
+
+    # Get phase from the original FFT data
+    phase = np.angle(fft)
+
+    # Construct the notch filter
+    rows, cols = magnitude_log.shape
+    center_row, center_col = rows // 2, cols // 2
+
+    # Mask initialization for visualization
+    mask_total = np.ones((rows, cols), dtype=np.float32)
+
+    for point in notch_points:
+        mask = np.zeros((rows, cols), dtype=np.float32)
+        cv2.circle(mask, (point[0], point[1]), int(point[2]), 1, -1)
+        cv2.circle(mask, (-point[0], -point[1]), int(point[2]), 1, -1)
+        mask_total *= (1 - mask)  # Update total mask for visualization
+        magnitude *= (1 - mask)  # Apply notch filter by multiplying with the mask
+
+    # Optionally visualize the mask to confirm the notches
+    cv2.imshow('Mask', mask_total)
+    cv2.waitKey(0)
+
+    # Recompose the complex image from magnitude and phase
+    complex_image = magnitude * (np.cos(phase) + 1j * np.sin(phase))
+
+    # Inverse FFT to convert back to spatial domain
+    img_back = np.fft.ifft2(np.fft.ifftshift(complex_image))
+    img_back = np.real(img_back)
+
+    # Normalize the image to 8-bit scale (0-255)
+    img_back = cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX)
+    img_back = np.uint8(img_back)
     return img_back

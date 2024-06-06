@@ -20,6 +20,11 @@ class ImageEditorApp:
         self.img_label = Label(self.img_container)
         self.img_label.place(relx=0.5, rely=0.5, anchor=CENTER)  # Center the label in the container
         self.setup_ui()
+        self.notch_points = []
+        self.notch_reject_active = False
+        self.is_fft_image = False
+        self.fft = None
+        self.fft_phase_angle = None
 
     def setup_logging():
         logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
@@ -39,21 +44,26 @@ class ImageEditorApp:
         self.root.config(menu=menu_bar)
         self.create_menus(menu_bar, self.config['menu_options'])
 
+        self.img_label.bind("<Button-1>", self.on_image_click)
+        self.root.bind("<Return>", self.on_enter_pressed)
+
     def create_menus(self, menu_bar, menu_config):
         for menu_name, items in menu_config.items():
-            if isinstance(items, list):  # Check if the current item is a list
+            if isinstance(items, list):
                 menu = Menu(menu_bar, tearoff=False)
                 menu_bar.add_cascade(label=menu_name.replace('_', ' '), menu=menu)
                 for item in items:
-                    if item == "Exit":  # Special handling for 'Exit'
+                    if item == "Exit":
                         menu.add_command(label=item.replace('_', ' '), command=self.root.quit)
+                    elif item == "Notch Reject":
+                        menu.add_command(label=item.replace('_', ' '), command=self.notch_reject_image, state=DISABLED if not self.is_fft_image else NORMAL)
                     else:
-                        method_name = item.lower() + '_image'
-                        if hasattr(self, method_name):  # Check if the method exists
+                        method_name = item.lower().replace(' ', '_') + '_image'
+                        if hasattr(self, method_name):
                             menu.add_command(label=item.replace('_', ' '), command=getattr(self, method_name))
                         else:
                             print(f"Warning: No method found for {item}")
-            elif isinstance(items, dict):  # Recursive call for nested menus
+            elif isinstance(items, dict):
                 parent_menu = Menu(menu_bar, tearoff=False)
                 menu_bar.add_cascade(label=menu_name.replace('_', ' '), menu=parent_menu)
                 self.create_menus(parent_menu, items)
@@ -406,10 +416,13 @@ class ImageEditorApp:
 
     def ft_image(self):
         try:
-            magnitude_spectrum, phase_angle = self.image_processor.compute_fft_spectrum_and_phase()
+            magnitude_spectrum, phase_angle, f = self.image_processor.compute_fft_spectrum_and_phase()
             self.root.after(0, self.show_fft_results, magnitude_spectrum, phase_angle)
             np_image = magnitude_spectrum
             self.root.after(0, self.display_image, np_image)
+            self.is_fft_image = True
+            self.fft = f
+            self.fft_phase_angle = phase_angle
         except Exception as e:
             self.handle_error("Failed to transform", e)
 
@@ -504,12 +517,65 @@ class ImageEditorApp:
             self.handle_error("Failed to filter the image", e)
             popup.destroy()
 
+    def notch_reject_image(self):
+        if not self.is_fft_image:
+            messagebox.showinfo("Notch Reject Filter", "This operation can only be applied to an FFT image.")
+            return
+        self.notch_reject_active = True
+        messagebox.showinfo("Notch Reject Filter", "Click on the desired points in the image and press Enter to apply the filter.")
+        self.notch_points = []
+
+    def on_image_click(self, event):
+        if self.notch_reject_active:
+            x, y = event.x, event.y
+            self.show_radius_popup(x, y)
+
+    def show_radius_popup(self, x, y):
+        popup = Toplevel(self.root)
+        popup.title("Notch Reject Radius")
+        popup.geometry("200x100")
+
+        Label(popup, text="Radius size:").pack(side="top", fill="x", pady=10)
+        radius_entry = Entry(popup)
+        radius_entry.pack(side="top", fill="x", padx=60)
+        apply_button = Button(popup, text="Apply", command=lambda: self.add_notch_point(x, y, radius_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def add_notch_point(self, x, y, radius, popup):
+        try:
+            radius = float(radius)
+            self.notch_points.append((x, y, radius))
+            self.update_display_with_notch_points()
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Notch Reject", "Invalid radius value. Please enter a valid number.")
+
+    def update_display_with_notch_points(self):
+        # Ensure we start from the original image
+        np_image = self.image_processor.current_image.copy()
+        for (x, y, radius) in self.notch_points:
+            cv2.circle(np_image, (x, y), int(radius), (0, 255, 0), -1)  # Fill the circle with -1 thickness
+        self.display_image(np_image)
+
+    def on_enter_pressed(self, event):
+        if self.notch_reject_active and self.notch_points:
+            try:
+                # Apply the notch reject filter to the FFT image
+                filtered_fft_image = self.image_processor.apply_notch_reject( self.fft, self.notch_points)
+                # Convert the filtered FFT image back to the spatial domain
+                #spatial_image = self.image_processor.inverse_fft(filtered_fft_image, self.fft_phase_angle)
+                self.display_image(filtered_fft_image)
+                self.notch_points = []
+                self.notch_reject_active = False
+                self.is_fft_image = False
+            except Exception as e:
+                self.handle_error("Failed to apply notch reject filter", e)
+
     def display_image(self, np_image):
         # Convert the NumPy image to a PIL image
         if np_image.dtype != np.uint8:
-        # Normalize to [0, 1] if the data type is float
             np_image = ((np_image - np_image.min()) / (np_image.max() - np_image.min()) * 255).astype(np.uint8)
-
+        
         pil_image = Image.fromarray(cv2.cvtColor(np_image.astype(np.uint8), cv2.COLOR_BGR2RGB))
 
         # Get screen size and image size

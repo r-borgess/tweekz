@@ -62,8 +62,8 @@ class ImageProcessor:
         return self.current_image, laplacian, laplacian_adjusted
     
     def compute_fft_spectrum_and_phase(self):
-        self.current_image, phase_angle = image_processor.compute_fft_spectrum_and_phase(self.current_image)
-        return self.current_image, phase_angle
+        self.current_image, phase_angle, f = image_processor.compute_fft_spectrum_and_phase(self.current_image)
+        return self.current_image, phase_angle, f
     
     def compute_inverse_fft(self, magnitude_spectrum, phase_angle):
         self.current_image = image_processor.compute_inverse_fft(magnitude_spectrum, phase_angle)
@@ -75,4 +75,8 @@ class ImageProcessor:
     
     def apply_low_pass(self, radius):
         self.current_image = image_processor.low_pass(self.current_image, radius)
+        return self.current_image
+
+    def apply_notch_reject(self, fft,notch_points):
+        self.current_image = image_processor.notch_reject(self.current_image, fft, notch_points)
         return self.current_image
