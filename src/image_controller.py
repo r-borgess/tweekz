@@ -96,3 +96,19 @@ class ImageProcessor:
     def apply_alpha_trimmed_mean_filter(self, kernel_size, d):
         self.current_image = image_processor.alpha_trimmed_mean_filter(self.current_image, kernel_size, d)
         return self.current_image
+
+    def apply_erosion(self, kernel_size, iterations, element_type):
+        self.current_image = image_processor.erosion(self.current_image, kernel_size, iterations, element_type)
+        return self.current_image
+    
+    def apply_dilation(self, kernel_size=3, iterations=1, element_type='rect'):
+        self.current_image = image_processor.dilation(self.current_image, kernel_size, iterations, element_type)
+        return self.current_image
+
+    def apply_opening(self, kernel_size=3, iterations=1, element_type='rect'):
+        self.current_image = image_processor.opening(self.current_image, kernel_size, iterations, element_type)
+        return self.current_image
+    
+    def apply_closinig(self, kernel_size=3, iterations=1, element_type='rect'):
+        self.current_image = image_processor.closing(self.current_image, kernel_size, iterations, element_type)
+        return self.current_image

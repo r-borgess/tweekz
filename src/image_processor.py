@@ -757,3 +757,132 @@ def alpha_trimmed_mean_filter(image, kernel_size, d):
                                for i in range(filtered_image.shape[0] - kernel_size + 1)])
     
     return filtered_image.astype(image.dtype)
+
+def get_structuring_element(kernel_size, element_type):
+    """
+    Generates a structuring element (kernel) of the specified type and size.
+
+    :param kernel_size: Size of the kernel.
+    :param element_type: Type of the structuring element ('rect', 'ellipse', 'cross').
+    :return: Structuring element (kernel).
+    """
+    if element_type == 'rect':
+        return np.ones((kernel_size, kernel_size), np.uint8)
+    elif element_type == 'ellipse':
+        return cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (kernel_size, kernel_size))
+    elif element_type == 'cross':
+        return cv2.getStructuringElement(cv2.MORPH_CROSS, (kernel_size, kernel_size))
+    else:
+        raise ValueError("Unsupported element type. Use 'rect', 'ellipse', or 'cross'.")
+
+def erosion(image, kernel_size=3, iterations=1, element_type='rect'):
+    """
+    Applies erosion to the input image using a custom implementation.
+
+    :param image: Input image (numpy array).
+    :param kernel_size: Size of the kernel (default is 3).
+    :param iterations: Number of times erosion is applied (default is 1).
+    :param element_type: Type of the structuring element ('rect', 'ellipse', 'cross').
+    :return: Eroded image (numpy array).
+    """
+    # Ensure the input image is binary
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, binary_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+    
+    # Get the image dimensions
+    rows, cols = binary_image.shape
+    
+    # Create the structuring element
+    kernel = get_structuring_element(kernel_size, element_type)
+    k_center = kernel_size // 2
+    
+    # Pad the image with zeros on all sides
+    padded_image = np.pad(binary_image, pad_width=k_center, mode='constant', constant_values=0)
+    
+    # Perform erosion
+    eroded_image = binary_image.copy()
+    for _ in range(iterations):
+        for i in range(rows):
+            for j in range(cols):
+                # Extract the region of interest
+                region = padded_image[i:i + kernel_size, j:j + kernel_size]
+                # Apply the erosion operation
+                if np.array_equal(region & kernel, kernel):
+                    eroded_image[i, j] = 255
+                else:
+                    eroded_image[i, j] = 0
+        # Update the padded image for the next iteration
+        padded_image = np.pad(eroded_image, pad_width=k_center, mode='constant', constant_values=0)
+    
+    return eroded_image
+
+def dilation(image, kernel_size=3, iterations=1, element_type='rect'):
+    """
+    Applies dilation to the input image using a custom implementation.
+
+    :param image: Input image (numpy array).
+    :param kernel_size: Size of the kernel (default is 3).
+    :param iterations: Number of times dilation is applied (default is 1).
+    :param element_type: Type of the structuring element ('rect', 'ellipse', 'cross').
+    :return: Dilated image (numpy array).
+    """
+    # Ensure the input image is binary
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, binary_image = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
+    
+    # Get the image dimensions
+    rows, cols = binary_image.shape
+    
+    # Create the structuring element
+    kernel = get_structuring_element(kernel_size, element_type)
+    k_center = kernel_size // 2
+    
+    # Pad the image with zeros on all sides
+    padded_image = np.pad(binary_image, pad_width=k_center, mode='constant', constant_values=0)
+    
+    # Perform dilation
+    dilated_image = binary_image.copy()
+    for _ in range(iterations):
+        for i in range(rows):
+            for j in range(cols):
+                # Extract the region of interest
+                region = padded_image[i:i + kernel_size, j:j + kernel_size]
+                # Apply the dilation operation
+                if np.any(region & kernel):
+                    dilated_image[i, j] = 255
+                else:
+                    dilated_image[i, j] = 0
+        # Update the padded image for the next iteration
+        padded_image = np.pad(dilated_image, pad_width=k_center, mode='constant', constant_values=0)
+    
+    return dilated_image
+
+def opening(image, kernel_size=3, iterations=1, element_type='rect'):
+    """
+    Applies opening to the input image using erosion followed by dilation.
+
+    :param image: Input image (numpy array).
+    :param kernel_size: Size of the kernel (default is 3).
+    :param iterations: Number of times each operation is applied (default is 1).
+    :param element_type: Type of the structuring element ('rect', 'ellipse', 'cross').
+    :return: Opened image (numpy array).
+    """
+    eroded_image = erosion(image, kernel_size, iterations, element_type)
+    opened_image = dilation(eroded_image, kernel_size, iterations, element_type)
+    return opened_image
+
+def closing(image, kernel_size=3, iterations=1, element_type='rect'):
+    """
+    Applies closing to the input image using dilation followed by erosion.
+
+    :param image: Input image (numpy array).
+    :param kernel_size: Size of the kernel (default is 3).
+    :param iterations: Number of times each operation is applied (default is 1).
+    :param element_type: Type of the structuring element ('rect', 'ellipse', 'cross').
+    :return: Closed image (numpy array).
+    """
+    dilated_image = dilation(image, kernel_size, iterations, element_type)
+    closed_image = erosion(dilated_image, kernel_size, iterations, element_type)
+    return closed_image

@@ -1,6 +1,6 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as tkb
-from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button, StringVar
+from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button, StringVar, OptionMenu
 from tkinter.ttk import Combobox
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -663,6 +663,182 @@ class ImageEditorApp:
             messagebox.showerror("Alpha Trimmed Mean Filter", "Invalid kernel size value. Please enter a valid number.")
         except Exception as e:
             self.handle_error("Failed to filter the image", e)
+            popup.destroy()
+
+    def erosion_image(self):
+        self.create_erosion_popup()
+
+    def create_erosion_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Erosion")
+        popup.geometry("200x300")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="Iterations:").pack(side="top", fill="x", pady=10)
+
+        iterations_entry = Entry(popup)
+        iterations_entry.pack(side="top", fill="x", padx=60)
+        
+        Label(popup, text="Kernel Type:").pack(side="top", fill="x", pady=10)
+
+        kernel_type_var = StringVar(popup)
+        kernel_type_var.set("rect")  # default value
+
+        kernel_type_options = ["rect", "ellipse", "cross"]
+        kernel_type_menu = OptionMenu(popup, kernel_type_var, *kernel_type_options)
+        kernel_type_menu.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_erosion_and_close_popup(kernel_size_entry.get(), iterations_entry.get(), kernel_type_var.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_erosion_and_close_popup(self, kernel_size, iterations, kernel_type, popup):
+        try:
+            kernel_size = int(kernel_size)
+            iterations = int(iterations)
+            kernel_type = str(kernel_type)
+            np_image = self.image_processor.apply_erosion(kernel_size, iterations, kernel_type)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Erosion", "Invalid values. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to transform the image", e)
+            popup.destroy()
+
+    def dilation_image(self):
+        self.create_dilation_popup()
+
+    def create_dilation_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Dilation")
+        popup.geometry("200x300")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="Iterations:").pack(side="top", fill="x", pady=10)
+
+        iterations_entry = Entry(popup)
+        iterations_entry.pack(side="top", fill="x", padx=60)
+        
+        Label(popup, text="Kernel Type:").pack(side="top", fill="x", pady=10)
+
+        kernel_type_var = StringVar(popup)
+        kernel_type_var.set("rect")  # default value
+
+        kernel_type_options = ["rect", "ellipse", "cross"]
+        kernel_type_menu = OptionMenu(popup, kernel_type_var, *kernel_type_options)
+        kernel_type_menu.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_dilation_and_close_popup(kernel_size_entry.get(), iterations_entry.get(), kernel_type_var.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_dilation_and_close_popup(self, kernel_size, iterations, kernel_type, popup):
+        try:
+            kernel_size = int(kernel_size)
+            iterations = int(iterations)
+            kernel_type = str(kernel_type)
+            np_image = self.image_processor.apply_dilation(kernel_size, iterations, kernel_type)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Dilation", "Invalid values. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to transform the image", e)
+            popup.destroy()
+
+    def opening_image(self):
+        self.create_opening_popup()
+
+    def create_opening_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Opening")
+        popup.geometry("200x300")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="Iterations:").pack(side="top", fill="x", pady=10)
+
+        iterations_entry = Entry(popup)
+        iterations_entry.pack(side="top", fill="x", padx=60)
+        
+        Label(popup, text="Kernel Type:").pack(side="top", fill="x", pady=10)
+
+        kernel_type_var = StringVar(popup)
+        kernel_type_var.set("rect")  # default value
+
+        kernel_type_options = ["rect", "ellipse", "cross"]
+        kernel_type_menu = OptionMenu(popup, kernel_type_var, *kernel_type_options)
+        kernel_type_menu.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_opening_and_close_popup(kernel_size_entry.get(), iterations_entry.get(), kernel_type_var.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_opening_and_close_popup(self, kernel_size, iterations, kernel_type, popup):
+        try:
+            kernel_size = int(kernel_size)
+            iterations = int(iterations)
+            kernel_type = str(kernel_type)
+            np_image = self.image_processor.apply_opening(kernel_size, iterations, kernel_type)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Opening", "Invalid values. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to transform the image", e)
+            popup.destroy()
+
+    def closing_image(self):
+        self.create_opening_popup()
+
+    def create_closing_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Closing")
+        popup.geometry("200x300")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="Iterations:").pack(side="top", fill="x", pady=10)
+
+        iterations_entry = Entry(popup)
+        iterations_entry.pack(side="top", fill="x", padx=60)
+        
+        Label(popup, text="Kernel Type:").pack(side="top", fill="x", pady=10)
+
+        kernel_type_var = StringVar(popup)
+        kernel_type_var.set("rect")  # default value
+
+        kernel_type_options = ["rect", "ellipse", "cross"]
+        kernel_type_menu = OptionMenu(popup, kernel_type_var, *kernel_type_options)
+        kernel_type_menu.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_closing_and_close_popup(kernel_size_entry.get(), iterations_entry.get(), kernel_type_var.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_closing_and_close_popup(self, kernel_size, iterations, kernel_type, popup):
+        try:
+            kernel_size = int(kernel_size)
+            iterations = int(iterations)
+            kernel_type = str(kernel_type)
+            np_image = self.image_processor.apply_closing(kernel_size, iterations, kernel_type)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Closing", "Invalid values. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to transform the image", e)
             popup.destroy()
 
     def display_image(self, np_image):
