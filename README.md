@@ -9,9 +9,9 @@ This tool is designed as a platform for demonstrating and executing image proces
 - Load and display images from your file system.
 - Save modified images back to your file system.
 - Intensity transformations.
-- Bit plane extraction.
-- Histogram equalization.
 - Spatial and frequency domain filtering.
+- Morphological operations.
+- Compressing.
 - Restore the original state of any modified image.
 
 ## Getting Started
