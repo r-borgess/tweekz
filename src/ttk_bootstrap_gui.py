@@ -1,6 +1,6 @@
 from ttkbootstrap.constants import *
 import ttkbootstrap as tkb
-from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button, StringVar, OptionMenu
+from tkinter import filedialog, messagebox, Label, Frame, Menu, Toplevel, Entry, Button, StringVar, OptionMenu, Text
 from tkinter.ttk import Combobox
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -840,6 +840,34 @@ class ImageEditorApp:
         except Exception as e:
             self.handle_error("Failed to transform the image", e)
             popup.destroy()
+
+    def huffman_code_image(self):
+        try:
+            results = self.image_processor.apply_huffman_coding()
+            self.show_huffman_results(results)
+        except Exception as e:
+            self.handle_error("Failed to process the image for Huffman coding", e)
+    
+    def show_huffman_results(self, results):
+        popup = Toplevel(self.root)
+        popup.title("Huffman Coding Results")
+        popup.geometry("800x600")
+
+        huffman_codes = results['Huffman Codes']
+        entropy = results['Entropy']
+        compression_ratio = results['Compression Ratio']
+        relative_redundancy = results['Relative Redundancy']
+
+        results_text = f"Entropy: {entropy:.4f}\nCompression Ratio: {compression_ratio:.4f}\nRelative Redundancy: {relative_redundancy:.4f}\n\nHuffman Codes:\n"
+        results_text += "\n".join([f"Intensity: {intensity}, Probability: {probability:.4f}, Code: {code}" for intensity, probability, code in huffman_codes])
+
+        text_widget = Text(popup, wrap="word")
+        text_widget.insert("1.0", results_text)
+        text_widget.config(state="disabled")
+        text_widget.pack(fill="both", expand=True)
+
+    def handle_error(self, message, error):
+        messagebox.showerror("Error", f"{message}\n\n{error}")
 
     def display_image(self, np_image):
         # Convert the NumPy image to a PIL image

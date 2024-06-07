@@ -112,3 +112,7 @@ class ImageProcessor:
     def apply_closinig(self, kernel_size=3, iterations=1, element_type='rect'):
         self.current_image = image_processor.closing(self.current_image, kernel_size, iterations, element_type)
         return self.current_image
+
+    def apply_huffman_coding(self):
+        self.current_image = image_processor.huffman_coding(self.current_image)
+        return self.current_image

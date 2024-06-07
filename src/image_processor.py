@@ -2,6 +2,10 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import generic_filter
+from scipy.stats import entropy as scipy_entropy
+from PIL import Image
+from collections import defaultdict, Counter
+import heapq
 
 original_image = None
 
@@ -886,3 +890,59 @@ def closing(image, kernel_size=3, iterations=1, element_type='rect'):
     dilated_image = dilation(image, kernel_size, iterations, element_type)
     closed_image = erosion(dilated_image, kernel_size, iterations, element_type)
     return closed_image
+
+def calculate_histogram(image):
+    """Calculate the histogram of image intensities."""
+    histogram = defaultdict(int)
+    width, height = image.size
+    pixels = list(image.getdata())
+    for pixel in pixels:
+        histogram[pixel] += 1
+    return histogram, width * height
+
+def build_huffman_tree(histogram):
+    """Build a Huffman tree given a histogram."""
+    heap = [[weight, [symbol, ""]] for symbol, weight in histogram.items()]
+    heapq.heapify(heap)
+    while len(heap) > 1:
+        lo = heapq.heappop(heap)
+        hi = heapq.heappop(heap)
+        for pair in lo[1:]:
+            pair[1] = '0' + pair[1]
+        for pair in hi[1:]:
+            pair[1] = '1' + pair[1]
+        heapq.heappush(heap, [lo[0] + hi[0]] + lo[1:] + hi[1:])
+    return sorted(heapq.heappop(heap)[1:], key=lambda p: (len(p[-1]), p))
+
+def calculate_entropy(histogram, total_pixels):
+    """Calculate the entropy of the image."""
+    probabilities = [count / total_pixels for count in histogram.values()]
+    return scipy_entropy(probabilities, base=2)
+
+def calculate_compression_ratios(histogram, huffman_codes, total_pixels):
+    """Calculate the compression ratios and relative redundancy."""
+    original_size = total_pixels * 8  # 8 bits per pixel
+    compressed_size = sum(len(code) * histogram[symbol] for symbol, code in huffman_codes)
+    compression_ratio = original_size / compressed_size
+    relative_redundancy = 1 - (1 / compression_ratio)
+    return compression_ratio, relative_redundancy
+
+def huffman_coding(image):
+    """Main function to process the image and return the required metrics."""
+    if len(image.shape) == 3 and image.shape[2] == 3:
+        image = Image.fromarray(image).convert('L')
+    else:
+        image = Image.fromarray(image)
+    histogram, total_pixels = calculate_histogram(image)
+    huffman_codes = build_huffman_tree(histogram)
+    entropy = calculate_entropy(histogram, total_pixels)
+    compression_ratio, relative_redundancy = calculate_compression_ratios(histogram, huffman_codes, total_pixels)
+
+    result = {
+        'Huffman Codes': [(symbol, histogram[symbol] / total_pixels, code) for symbol, code in huffman_codes],
+        'Entropy': entropy,
+        'Compression Ratio': compression_ratio,
+        'Relative Redundancy': relative_redundancy
+    }
+    
+    return result
