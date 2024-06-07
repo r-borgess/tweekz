@@ -95,6 +95,39 @@ class ImageEditorApp:
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
             self.handle_error("Failed to blackout the image", e)
+    
+    def gaussian_image(self):
+        try:
+            np_image, hist = self.image_processor.apply_gaussian_noise(mean=0, std=100, fixed_size=(640,640))
+            self.root.after(0, self.show_noise_histogram, hist)
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            self.handle_error("Failed to apply/generate noise", e)
+    
+    def salt_and_pepper_image(self):
+        try:
+            np_image, hist = self.image_processor.apply_salt_and_pepper_noise(salt_prob=0.05, pepper_prob=0.05, fixed_size=(640,640))
+            self.root.after(0, self.show_noise_histogram, hist)
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            self.handle_error("Failed to apply/generate noise", e) 
+
+    def show_noise_histogram(self, hist):
+        popup = Toplevel(self.root)
+        popup.title("Noise histogram")
+        popup.geometry("800x600")
+
+        # Plot histograms
+        fig = Figure(figsize=(6, 4), dpi=100)
+        ax1 = fig.add_subplot(121)
+
+        ax1.bar(range(len(hist)), hist.ravel(), color='gray')
+        ax1.set_title('Noise Histogram')
+        ax1.set_xlim([0, 256])
+
+        canvas = FigureCanvasTkAgg(fig, master=popup)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side="bottom", fill="both", expand=True)
 
     def gamma_transform_image(self):
         self.create_gamma_popup()
@@ -570,6 +603,67 @@ class ImageEditorApp:
                 self.is_fft_image = False
             except Exception as e:
                 self.handle_error("Failed to apply notch reject filter", e)
+
+    def geometric_mean_image(self):
+        self.create_geometric_mean_filter_popup()
+
+    def create_geometric_mean_filter_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Geometric Mean Filter")
+        popup.geometry("200x100")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_geometric_mean_filter_and_close_popup(kernel_size_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_geometric_mean_filter_and_close_popup(self, kernel_size, popup):
+        try:
+            kernel_size = int(kernel_size)
+            np_image = self.image_processor.apply_geometric_mean_filter(kernel_size)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Geometric Mean Filter", "Invalid kernel size value. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to filter the image", e)
+            popup.destroy()
+
+    def alpha_trimmed_mean_image(self):
+        self.create_alpha_trimmed_mean_filter_popup()
+
+    def create_alpha_trimmed_mean_filter_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Alpha Trimmed Mean Filter")
+        popup.geometry("200x200")
+
+        Label(popup, text="Kernel Size:").pack(side="top", fill="x", pady=10)
+
+        kernel_size_entry = Entry(popup)
+        kernel_size_entry.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="d:").pack(side="top", fill="x", pady=10)
+
+        d_value_entry = Entry(popup)
+        d_value_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_alpha_trimmed_mean_and_close_popup(kernel_size_entry.get(), d_value_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_alpha_trimmed_mean_and_close_popup(self, kernel_size, d_value,popup):
+        try:
+            kernel_size = int(kernel_size)
+            np_image = self.image_processor.apply_alpha_trimmed_mean_filter(kernel_size, int(d_value))
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Alpha Trimmed Mean Filter", "Invalid kernel size value. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to filter the image", e)
+            popup.destroy()
 
     def display_image(self, np_image):
         # Convert the NumPy image to a PIL image

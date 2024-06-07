@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.ndimage import generic_filter
 
 original_image = None
 
@@ -602,3 +603,157 @@ def notch_reject(magnitude_log, fft, notch_points):
     img_back = cv2.normalize(img_back, None, 0, 255, cv2.NORM_MINMAX)
     img_back = np.uint8(img_back)
     return img_back
+
+def gaussian_noise(image=None, mean=0, std=25, fixed_size=(256, 256)):
+    """
+    Applies Gaussian noise to a provided image or to a fixed-size empty image if no image is provided,
+    and returns the noisy image along with the histogram of just the noise.
+
+    Parameters:
+        image (numpy.ndarray, optional): The image to which the noise will be applied. Can be grayscale or color.
+        mean (float): The mean of the Gaussian noise.
+        std (float): The standard deviation of the Gaussian noise.
+        fixed_size (tuple): The size of the image if no image is provided, in the format (height, width).
+
+    Returns:
+        tuple: A tuple containing:
+               - numpy.ndarray: The noisy image.
+               - numpy.ndarray: The histogram of the noise.
+    """
+    # Create an empty image if none is provided
+    if image is None:
+        image = np.zeros((fixed_size[0], fixed_size[1], 3), dtype=np.uint8)  # Assuming a color image
+
+    # Check if the image is grayscale
+    is_gray = len(image.shape) == 2 or image.shape[2] == 1
+
+    # Generate Gaussian noise
+    if is_gray:
+        gaussian_noise = np.random.normal(mean, std, image.shape)
+    else:
+        gaussian_noise = np.random.normal(mean, std, image.shape)
+
+    # Create noise image for histogram calculation
+    noise_image = gaussian_noise - gaussian_noise.min()
+    noise_image = (noise_image / noise_image.max()) * 255
+    noise_image = noise_image.astype(np.uint8)
+
+    # Add noise to the image
+    noisy_image = cv2.add(image.astype(np.float32), gaussian_noise.astype(np.float32))
+    noisy_image = noisy_image.clip(0, 255).astype(np.uint8)
+
+    # Calculate the histogram of the noise layer
+    hist = cv2.calcHist([noise_image], [0], None, [256], [0, 256])
+
+    return noisy_image, hist
+
+def salt_and_pepper_noise(image=None, salt_prob=0.05, pepper_prob=0.05, fixed_size=(256, 256)):
+    """
+    Applies salt and pepper noise to a provided image or to a fixed-size empty image if no image is provided,
+    and returns the noisy image along with the histogram of the noise.
+
+    Parameters:
+        image (numpy.ndarray, optional): The image to which the noise will be applied. Can be grayscale or color.
+        salt_prob (float): The probability of adding salt noise.
+        pepper_prob (float): The probability of adding pepper noise.
+        fixed_size (tuple): The size of the image if no image is provided, in the format (height, width).
+
+    Returns:
+        tuple: A tuple containing:
+               - numpy.ndarray: The noisy image.
+               - numpy.ndarray: The histogram of the noise.
+    """
+    # Create an empty image if none is provided
+    if image is None:
+        image = np.zeros((fixed_size[0], fixed_size[1], 3), dtype=np.uint8)  # Assuming a color image
+
+    # Check if the image is grayscale
+    is_gray = len(image.shape) == 2 or image.shape[2] == 1
+
+    # Initialize the noise layer
+    if is_gray:
+        noise_layer = np.zeros_like(image)
+    else:
+        noise_layer = np.zeros_like(image)
+
+    # Generate salt noise
+    num_salt = np.ceil(salt_prob * image.size).astype(int)
+    salt_coords = [np.random.randint(0, i - 1, num_salt) for i in image.shape]
+    noise_layer[tuple(salt_coords)] = 255
+
+    # Generate pepper noise
+    num_pepper = np.ceil(pepper_prob * image.size).astype(int)
+    pepper_coords = [np.random.randint(0, i - 1, num_pepper) for i in image.shape]
+    noise_layer[tuple(pepper_coords)] = 0
+
+    # Add noise to the original image
+    noisy_image = cv2.bitwise_or(image, noise_layer)
+
+    # Calculate the histogram of the noise layer
+    hist = cv2.calcHist([noise_layer], [0], None, [256], [0, 256])
+
+    return noisy_image, hist
+
+def geometric_mean_filter(image, kernel_size):
+    """
+    Applies a geometric mean filter to an image.
+
+    Parameters:
+    - input_image: numpy array, the image to be filtered.
+    - kernel_size: int, the size of the kernel (must be odd).
+
+    Returns:
+    - filtered_image: numpy array, the geometric mean filtered image.
+    """
+
+    def geometric_mean(data):
+        # Avoid logarithm of zero by replacing zero with a very small number
+        data = np.where(data == 0, 1e-10, data)
+        # Calculate the logarithm of the pixels
+        log_data = np.log(data)
+        # Compute the mean of the logarithm values
+        mean_log = np.mean(log_data)
+        # Return the exponent of the mean log, which is the geometric mean
+        return np.exp(mean_log)
+    
+    kernel_shape = (kernel_size, kernel_size) if image.ndim == 2 else (kernel_size, kernel_size, 1)
+
+    # Apply the geometric mean filter
+    filtered_image = generic_filter(image, geometric_mean, size=kernel_shape)
+
+    return filtered_image
+
+def alpha_trimmed_mean_filter(image, kernel_size, d):
+    """
+    Apply alpha-trimmed mean filter to an image.
+    
+    :param image: Input image
+    :param kernel_size: Size of the kernel (must be an odd number)
+    :param d: Number of pixels to trim from each end of the pixel list (must be less than half of kernel_size**2)
+    :return: Alpha-trimmed mean filtered image
+    """
+    # Check if the kernel size is odd
+    if kernel_size % 2 == 0:
+        raise ValueError("Kernel size must be an odd number.")
+    
+    # Check if d is appropriate
+    if d * 2 >= kernel_size**2:
+        raise ValueError("d must be less than half of kernel_size**2.")
+    
+    # Define the depth of the filter
+    depth = -1  # Use the same depth as the source image
+    
+    # Define a custom filter function
+    def filter_function(window):
+        window = window.flatten()
+        trimmed = np.sort(window)[d:-d]  # Trim d pixels from both ends and sort
+        return np.mean(trimmed)
+    
+    # Apply the custom filter
+    filtered_image = cv2.filter2D(image, depth, np.ones((kernel_size, kernel_size)), borderType=cv2.BORDER_REFLECT)
+    filtered_image = cv2.copyMakeBorder(filtered_image, d, d, d, d, cv2.BORDER_REFLECT)
+    filtered_image = np.array([[filter_function(filtered_image[i:i+kernel_size, j:j+kernel_size])
+                                for j in range(filtered_image.shape[1] - kernel_size + 1)]
+                               for i in range(filtered_image.shape[0] - kernel_size + 1)])
+    
+    return filtered_image.astype(image.dtype)

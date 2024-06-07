@@ -3,16 +3,23 @@
     "default_file_extension": ".jpg",
     "window_title": "tweekz",
     "menu_options": {
-        "file": ["Open", "Save", "Restore", "Exit"],
-        "intensity_transformations": ["Blackout", "Gamma_Transform", "Contrast_Stretch", "Bit_Plane_Extract", "Equalize_Histogram", "Intensity_Slice"],
+        "file": ["open", "save", "restore", "Exit"],
+        "intensity_transformations": ["blackout", "gamma_transform", "contrast_stretch", "bit_plane_extract", "equalize_histogram", "intensity_slice"],
         "spatial_domain": {
-            "smoothing": ["Average_Filter"],
-            "order-statistics": ["Min_Filter", "Max_Filter", "Median_Filter"],
-            "sharpening": ["Laplacian_Filter"]
+            "smoothing": ["average_filter"],
+            "order-statistics": ["min_filter", "max_filter", "median_filter"],
+            "sharpening": ["laplacian_filter"]
         },
         "frequency_domain": {
             "fourier_transform": ["FT"],
             "basic_filters": ["low_pass", "high_pass", "notch_reject"]
+        },
+        "image restoration": {
+            "noise effects":{
+                "generate noise": ["gaussian", "salt_and_pepper"],
+                "apply noise": ["gaussian", "salt_and_pepper"]
+            },
+            "filtering": ["geometric mean", "alpha_trimmed mean"]
         }
     }
 }

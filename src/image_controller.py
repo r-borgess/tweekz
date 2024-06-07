@@ -80,3 +80,19 @@ class ImageProcessor:
     def apply_notch_reject(self, fft,notch_points):
         self.current_image = image_processor.notch_reject(self.current_image, fft, notch_points)
         return self.current_image
+    
+    def apply_gaussian_noise(self, mean, std, fixed_size):
+        self.current_image, hist = image_processor.gaussian_noise(self.current_image, mean, std, fixed_size)
+        return self.current_image, hist
+    
+    def apply_salt_and_pepper_noise(self, salt_prob=0.05, pepper_prob=0.05, fixed_size=(640, 640)):
+        self.current_image, hist = image_processor.salt_and_pepper_noise(self.current_image, salt_prob, pepper_prob, fixed_size)
+        return self.current_image, hist
+    
+    def apply_geometric_mean_filter(self, kernel_size):
+        self.current_image = image_processor.geometric_mean_filter(self.current_image, kernel_size)
+        return self.current_image
+    
+    def apply_alpha_trimmed_mean_filter(self, kernel_size, d):
+        self.current_image = image_processor.alpha_trimmed_mean_filter(self.current_image, kernel_size, d)
+        return self.current_image
