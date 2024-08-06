@@ -6,6 +6,8 @@ from scipy.stats import entropy as scipy_entropy
 from PIL import Image
 from collections import defaultdict, Counter
 import heapq
+from collections import deque
+import random
 
 original_image = None
 
@@ -1022,3 +1024,34 @@ def canny_edge_detection(image, low_threshold, high_threshold):
                 pass
 
     return edges, nms_image, high_thresh_image, low_thresh_image
+
+def region_growing_segmentation(image, seeds, threshold=10):
+    image = image.copy()
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    height, width = image.shape
+    segmented = np.zeros((height, width, 3), dtype=np.uint8)  # Create a 3-channel image for color segmentation
+    directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+    visited = set()
+    queue = deque()
+
+    # Assign a random color to each seed
+    for seed in seeds:
+        queue.append(seed)
+        color = [random.randint(0, 255) for _ in range(3)]  # Generate a random color
+        while queue:
+            x, y = queue.popleft()
+            if (x, y) in visited:
+                continue
+            visited.add((x, y))
+            current_value = image[y, x]
+            segmented[y, x] = color
+            for dx, dy in directions:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < width and 0 <= ny < height and (nx, ny) not in visited:
+                    neighbor_value = image[ny, nx]
+                    if abs(int(neighbor_value) - int(current_value)) <= threshold:
+                        queue.append((nx, ny))
+
+    return segmented

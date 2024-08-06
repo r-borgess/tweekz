@@ -25,6 +25,9 @@ class ImageEditorApp:
         self.is_fft_image = False
         self.fft = None
         self.fft_phase_angle = None
+        self.region_growing_active = False
+        self.seeds = []
+        self.threshold = 10  # Default threshold
 
     def setup_logging():
         logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
@@ -562,6 +565,10 @@ class ImageEditorApp:
         if self.notch_reject_active:
             x, y = event.x, event.y
             self.show_radius_popup(x, y)
+        elif self.region_growing_active:
+            x, y = event.x, event.y
+            self.seeds.append((x, y))
+            self.update_display_with_seeds()
 
     def show_radius_popup(self, x, y):
         popup = Toplevel(self.root)
@@ -594,15 +601,21 @@ class ImageEditorApp:
         if self.notch_reject_active and self.notch_points:
             try:
                 # Apply the notch reject filter to the FFT image
-                filtered_fft_image = self.image_processor.apply_notch_reject( self.fft, self.notch_points)
-                # Convert the filtered FFT image back to the spatial domain
-                #spatial_image = self.image_processor.inverse_fft(filtered_fft_image, self.fft_phase_angle)
+                filtered_fft_image = self.image_processor.apply_notch_reject(self.fft, self.notch_points)
                 self.display_image(filtered_fft_image)
                 self.notch_points = []
                 self.notch_reject_active = False
                 self.is_fft_image = False
             except Exception as e:
                 self.handle_error("Failed to apply notch reject filter", e)
+        elif self.region_growing_active and self.seeds:
+            try:
+                np_image = self.image_processor.apply_region_growing(self.seeds, self.threshold)
+                self.root.after(0, self.display_image, np_image)
+                self.seeds = []
+                self.region_growing_active = False
+            except Exception as e:
+                self.handle_error("Failed to apply region growing segmentation", e)
 
     def geometric_mean_image(self):
         self.create_geometric_mean_filter_popup()
@@ -957,3 +970,36 @@ class ImageEditorApp:
         canvas.draw()
         canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
 
+    def region_growing_image(self):
+        self.create_region_growing_popup()
+
+    def update_display_with_seeds(self):
+        # Ensure we start from the original image
+        np_image = self.image_processor.current_image.copy()
+        for (x, y) in self.seeds:
+            cv2.circle(np_image, (x, y), 3, (0, 255, 0), -1)  # Draw small green circles for seeds
+        self.display_image(np_image)
+
+    def create_region_growing_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Region Growing Segmentation")
+        popup.geometry("200x150")
+
+        Label(popup, text="Threshold value:").pack(side="top", fill="x", pady=10)
+
+        threshold_entry = Entry(popup)
+        threshold_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.start_region_growing(threshold_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def start_region_growing(self, threshold, popup):
+        try:
+            threshold = int(threshold)
+            self.region_growing_active = True
+            self.seeds = []
+            self.threshold = threshold  # Store the threshold value
+            popup.destroy()
+            messagebox.showinfo("Region Growing Segmentation", "Click on the desired seed points in the image and press Enter to apply the segmentation.")
+        except ValueError:
+            messagebox.showerror("Region Growing Segmentation", "Invalid threshold value. Please enter a valid number.")

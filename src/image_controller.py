@@ -120,3 +120,7 @@ class ImageProcessor:
     def apply_canny_edge_detection(self, low_threshold, high_threshold):
         self.current_image, non_maxima_suppressed, weak_edges, strong_edges = image_processor.canny_edge_detection(self.current_image, low_threshold, high_threshold)
         return self.current_image, non_maxima_suppressed, weak_edges, strong_edges
+    
+    def apply_region_growing(self, seeds, threshold=10):
+        self.current_image = image_processor.region_growing_segmentation(self.current_image, seeds, threshold)
+        return self.current_image
