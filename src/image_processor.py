@@ -946,3 +946,79 @@ def huffman_coding(image):
     }
     
     return result
+
+
+def canny_edge_detection(image, low_threshold, high_threshold):
+    """
+    Apply Canny edge detection to an image and return the resultant image, 
+    the non-maxima suppressed image, the high threshold image, and the low threshold image.
+
+    Parameters:
+    image (numpy.ndarray): The input image.
+    low_threshold (int): The low threshold value for the hysteresis procedure.
+    high_threshold (int): The high threshold value for the hysteresis procedure.
+
+    Returns:
+    tuple: The resultant edge-detected image, the non-maxima suppressed image, 
+           the high threshold image, and the low threshold image.
+    """
+    # Convert image to grayscale if it is not
+    if len(image.shape) == 3:
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray_image = image
+
+    # Apply GaussianBlur to smooth the image and reduce noise
+    blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 1.4)
+
+    # Apply Canny edge detection
+    edges = cv2.Canny(blurred_image, low_threshold, high_threshold)
+
+    # Create the high threshold image by applying a binary threshold
+    _, high_thresh_image = cv2.threshold(blurred_image, high_threshold, 255, cv2.THRESH_BINARY)
+
+    # Create the low threshold image by applying a binary threshold
+    _, low_thresh_image = cv2.threshold(blurred_image, low_threshold, 255, cv2.THRESH_BINARY)
+
+    # Extract the non-maxima suppressed image (edges before hysteresis thresholding)
+    sobelx = cv2.Sobel(blurred_image, cv2.CV_64F, 1, 0, ksize=3)
+    sobely = cv2.Sobel(blurred_image, cv2.CV_64F, 0, 1, ksize=3)
+    magnitude = np.sqrt(sobelx**2 + sobely**2)
+    direction = np.arctan2(sobely, sobelx) * (180 / np.pi) % 180
+
+    # Non-maximum suppression
+    nms_image = np.zeros_like(magnitude, dtype=np.uint8)
+    angle = direction // 45 * 45
+
+    for i in range(1, nms_image.shape[0] - 1):
+        for j in range(1, nms_image.shape[1] - 1):
+            try:
+                q = 255
+                r = 255
+
+                # Angle 0
+                if (0 <= angle[i, j] < 22.5) or (157.5 <= angle[i, j] <= 180):
+                    q = magnitude[i, j + 1]
+                    r = magnitude[i, j - 1]
+                # Angle 45
+                elif 22.5 <= angle[i, j] < 67.5:
+                    q = magnitude[i + 1, j - 1]
+                    r = magnitude[i - 1, j + 1]
+                # Angle 90
+                elif 67.5 <= angle[i, j] < 112.5:
+                    q = magnitude[i + 1, j]
+                    r = magnitude[i - 1, j]
+                # Angle 135
+                elif 112.5 <= angle[i, j] < 157.5:
+                    q = magnitude[i - 1, j - 1]
+                    r = magnitude[i + 1, j + 1]
+
+                if magnitude[i, j] >= q and magnitude[i, j] >= r:
+                    nms_image[i, j] = magnitude[i, j]
+                else:
+                    nms_image[i, j] = 0
+
+            except IndexError as e:
+                pass
+
+    return edges, nms_image, high_thresh_image, low_thresh_image

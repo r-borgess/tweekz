@@ -897,3 +897,63 @@ class ImageEditorApp:
         self.img_label.configure(image=photo)
         self.img_label.image = photo  # Keep a reference
 
+    def canny_image(self):
+        self.create_canny_popup()
+
+    def create_canny_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Canny Thresholds")
+        popup.geometry("200x200")
+
+        Label(popup, text="Low Threshold:").pack(side="top", fill="x", pady=10)
+        low_threshold = Entry(popup)
+        low_threshold.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="High Threshold:").pack(side="top", fill="x", pady=10)
+        high_threshold = Entry(popup)
+        high_threshold.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_canny_and_close_popup(low_threshold.get(), high_threshold.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_canny_and_close_popup(self, low_threshold, high_threshold, popup):
+        try:
+            edges, non_max, weak, strong = self.image_processor.apply_canny_edge_detection(float(low_threshold), float(high_threshold))
+            self.root.after(0, self.show_canny_results, non_max, weak, strong)
+            np_image = edges
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Canny", "Invalid values. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to detect edges", e)
+            popup.destroy()
+
+    def show_canny_results(self, non_max, weak, strong):
+        popup = Toplevel(self.root)
+        popup.title("Canny Edge Detection Results")
+        popup.geometry("800x600")
+
+        # Plot results as images
+        fig = Figure(figsize=(50, 50), dpi=100)
+
+        ax1 = fig.add_subplot(131)
+        ax2 = fig.add_subplot(132)
+        ax3 = fig.add_subplot(133)
+
+        ax1.imshow(non_max, cmap='gray')
+        ax1.set_title('NMS')
+        ax1.axis('off')
+
+        ax2.imshow(weak, cmap='gray')
+        ax2.set_title('LT')
+        ax2.axis('off')
+
+        ax3.imshow(strong, cmap='gray')
+        ax3.set_title('HT')
+        ax3.axis('off')
+
+        canvas = FigureCanvasTkAgg(fig, master=popup)
+        canvas.draw()
+        canvas.get_tk_widget().pack(side="top", fill="both", expand=True)
+

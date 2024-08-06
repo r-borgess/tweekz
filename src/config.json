@@ -22,6 +22,7 @@
             "filtering": ["geometric mean", "alpha_trimmed mean"]
         },
         "morphological": ["erosion", "dilation", "opening", "closing"],
-        "compression": ["huffman_code"]
+        "compression": ["huffman_code"],
+        "segmentation": ["region_growing", "canny"]
     }
 }

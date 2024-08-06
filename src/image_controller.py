@@ -116,3 +116,7 @@ class ImageProcessor:
     def apply_huffman_coding(self):
         self.current_image = image_processor.huffman_coding(self.current_image)
         return self.current_image
+    
+    def apply_canny_edge_detection(self, low_threshold, high_threshold):
+        self.current_image, non_maxima_suppressed, weak_edges, strong_edges = image_processor.canny_edge_detection(self.current_image, low_threshold, high_threshold)
+        return self.current_image, non_maxima_suppressed, weak_edges, strong_edges
