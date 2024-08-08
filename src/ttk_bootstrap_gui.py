@@ -1026,3 +1026,10 @@ class ImageEditorApp:
         text_widget.insert("1.0", result_text)
         text_widget.config(state="disabled")
         text_widget.pack(fill="both", expand=True)
+
+    def skeletonize_image(self):
+        try:
+            np_image = self.image_processor.apply_skeletonization()
+            self.root.after(0, self.display_image, np_image)
+        except Exception as e:
+            self.handle_error("Failed to skeletonize the image", e)

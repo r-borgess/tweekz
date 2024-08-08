@@ -1110,3 +1110,62 @@ def chain_code(image):
     first_difference_code = first_difference_chain_code(chain_code)
     
     return chain_code, min_magnitude_code, first_difference_code
+
+
+def skeletize(image):
+    """
+    Perform skeletization (thinning) on a binary image using an optimized Zhang-Suen Thinning Algorithm.
+
+    Parameters:
+    image (numpy.ndarray): Input binary image (grayscale image with values 0 and 255).
+
+    Returns:
+    numpy.ndarray: Skeletized image.
+    """
+    # Normalize the image to binary
+    binary_image = (image // 255).astype(np.uint8)
+    
+    def neighbors(x, y, image):
+        "Return 8-neighbors of image point P1(x, y), in a clockwise order"
+        return [image[x-1, y], image[x-1, y+1], image[x, y+1], image[x+1, y+1], 
+                image[x+1, y], image[x+1, y-1], image[x, y-1], image[x-1, y-1]]
+
+    def transitions(neighbors):
+        "Count the number of 0-1 transitions in the ordered sequence"
+        n = neighbors + neighbors[0:1]  # Extend the list to compare the last element with the first one
+        return sum((n1, n2) == (0, 1) for n1, n2 in zip(n[:-1], n[1:]))
+
+    def zhang_suen_thinning(image):
+        "Optimized Zhang-Suen Thinning Algorithm"
+        changing = True
+        rows, columns = image.shape
+        while changing:
+            changing = []
+            for x in range(1, rows - 1):
+                for y in range(1, columns - 1):
+                    P2, P3, P4, P5, P6, P7, P8, P9 = neighbors(x, y, image)
+                    if (image[x, y] == 1 and 2 <= sum(neighbors(x, y, image)) <= 6 and 
+                        transitions(neighbors(x, y, image)) == 1 and 
+                        P2 * P4 * P6 == 0 and P4 * P6 * P8 == 0):
+                        changing.append((x, y))
+            for x, y in changing: image[x, y] = 0
+
+            changing = []
+            for x in range(1, rows - 1):
+                for y in range(1, columns - 1):
+                    P2, P3, P4, P5, P6, P7, P8, P9 = neighbors(x, y, image)
+                    if (image[x, y] == 1 and 2 <= sum(neighbors(x, y, image)) <= 6 and 
+                        transitions(neighbors(x, y, image)) == 1 and 
+                        P2 * P4 * P8 == 0 and P2 * P6 * P8 == 0):
+                        changing.append((x, y))
+            for x, y in changing: image[x, y] = 0
+
+        return image
+
+    # Apply the optimized Zhang-Suen Thinning Algorithm
+    skeleton = zhang_suen_thinning(binary_image.copy())
+    
+    # Convert back to 0-255 range
+    skeleton = skeleton * 255
+
+    return skeleton

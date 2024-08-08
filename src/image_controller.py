@@ -134,3 +134,12 @@ class ImageProcessor:
             return chain_code, min_magnitude_code, first_diff_code
         else:
             raise ValueError("No image loaded.")
+        
+    def apply_skeletonization(self):
+        if self.current_image is not None:
+            gray_image = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+            _, binary_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
+            self.current_image = image_processor.skeletize(gray_image)
+            return self.current_image
+        else:
+            raise ValueError("No image loaded.")

@@ -23,6 +23,6 @@
         },
         "morphological": ["erosion", "dilation", "opening", "closing"],
         "compression": ["huffman_code"],
-        "segmentation": ["region_growing", "canny", "chain_code"]
+        "segmentation": ["region_growing", "canny", "chain_code", "skeletonize"]
     }
 }
