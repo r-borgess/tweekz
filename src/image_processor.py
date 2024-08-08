@@ -1055,3 +1055,58 @@ def region_growing_segmentation(image, seeds, threshold=10):
                         queue.append((nx, ny))
 
     return segmented
+
+def chain_code(image):
+    # Directions for 8-connected chain code
+    directions = [(0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1)]
+    
+    # Find contours in the binary image
+    contours, _ = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    
+    # Assume the largest contour is the object of interest
+    contour = max(contours, key=cv2.contourArea)
+    
+    # Find the uppermost-leftmost point in the contour
+    upper_left_point = min(contour, key=lambda pt: (pt[0][1], pt[0][0]))
+    start_point = tuple(upper_left_point[0])
+    
+    # Find the index of the uppermost-leftmost point
+    start_index = np.where((contour == upper_left_point).all(axis=2))[0][0]
+    
+    # Initialize the Freeman chain code list
+    chain_code = []
+    
+    # Get the starting point
+    current_point = start_point
+    
+    for i in range(start_index, start_index + len(contour)):
+        next_point = tuple(contour[i % len(contour)][0])
+        if next_point != current_point:
+            diff = (next_point[0] - current_point[0], next_point[1] - current_point[1])
+            direction_code = directions.index(diff)
+            chain_code.append(direction_code)
+            current_point = next_point
+    
+    # Function to calculate minimum magnitude integer code
+    def min_magnitude_chain_code(chain_code):
+        n = len(chain_code)
+        min_code = chain_code
+        for i in range(n):
+            rotated_code = chain_code[i:] + chain_code[:i]
+            if rotated_code < min_code:
+                min_code = rotated_code
+        return min_code
+    
+    # Function to calculate first difference code
+    def first_difference_chain_code(chain_code):
+        n = len(chain_code)
+        first_diff_code = [(chain_code[i] - chain_code[i - 1]) % 8 for i in range(1, n)]
+        return first_diff_code
+    
+    # Calculate the minimum magnitude integer code
+    min_magnitude_code = min_magnitude_chain_code(chain_code)
+    
+    # Calculate the first difference code
+    first_difference_code = first_difference_chain_code(chain_code)
+    
+    return chain_code, min_magnitude_code, first_difference_code

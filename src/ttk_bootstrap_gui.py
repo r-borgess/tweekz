@@ -1003,3 +1003,26 @@ class ImageEditorApp:
             messagebox.showinfo("Region Growing Segmentation", "Click on the desired seed points in the image and press Enter to apply the segmentation.")
         except ValueError:
             messagebox.showerror("Region Growing Segmentation", "Invalid threshold value. Please enter a valid number.")
+
+    def chain_code_image(self):
+        if self.image_processor.current_image is not None:
+            try:
+                chain_code_result, min_magnitude_code, first_diff_code = self.image_processor.apply_chain_code()
+                
+                # Display the results in a popup
+                result_text = f"Chain Code: {chain_code_result}\nMinimum Magnitude Integer Code: {min_magnitude_code}\nFirst Difference Code: {first_diff_code}"
+                self.show_chain_code_results(result_text)
+            except Exception as e:
+                self.handle_error("Failed to apply chain code", e)
+        else:
+            messagebox.showerror("Chain Code", "No image to process.")
+
+    def show_chain_code_results(self, result_text):
+        popup = Toplevel(self.root)
+        popup.title("Chain Code Results")
+        popup.geometry("400x300")
+
+        text_widget = Text(popup, wrap="word")
+        text_widget.insert("1.0", result_text)
+        text_widget.config(state="disabled")
+        text_widget.pack(fill="both", expand=True)

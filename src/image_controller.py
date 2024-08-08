@@ -1,4 +1,5 @@
 import image_processor
+import cv2
 
 class ImageProcessor:
     def __init__(self):
@@ -124,3 +125,12 @@ class ImageProcessor:
     def apply_region_growing(self, seeds, threshold=10):
         self.current_image = image_processor.region_growing_segmentation(self.current_image, seeds, threshold)
         return self.current_image
+    
+    def apply_chain_code(self):
+        if self.current_image is not None:
+            gray_image = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
+            #_, binary_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
+            chain_code, min_magnitude_code, first_diff_code = image_processor.chain_code(gray_image)
+            return chain_code, min_magnitude_code, first_diff_code
+        else:
+            raise ValueError("No image loaded.")
