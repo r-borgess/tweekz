@@ -1133,3 +1133,41 @@ def skeletize(image):
     skeleton_image = (skeleton.astype(np.uint8) * 255)
     
     return skeleton_image
+
+
+def harris_corner_detector(image, k=0.04, T=0.01):
+    # Convert image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Convert to float32
+    gray = np.float32(gray)
+    
+    # Step 1: Compute the gradients Ix and Iy
+    Ix = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=7)
+    Iy = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=7)
+    
+    # Step 2: Compute products of derivatives at every pixel
+    Ix2 = Ix * Ix
+    Iy2 = Iy * Iy
+    Ixy = Ix * Iy
+    
+    # Step 3: Compute the sums of products of derivatives at each pixel
+    Sx2 = cv2.GaussianBlur(Ix2, (3, 3), sigmaX=1)
+    Sy2 = cv2.GaussianBlur(Iy2, (3, 3), sigmaX=1)
+    Sxy = cv2.GaussianBlur(Ixy, (3, 3), sigmaX=1)
+    
+    # Step 4: Compute the response of the detector at each pixel
+    detM = (Sx2 * Sy2) - (Sxy * Sxy)
+    traceM = Sx2 + Sy2
+    R = detM - k * (traceM ** 2)
+    
+    # Step 5: Threshold on R to find corners
+    corners = np.zeros_like(R)
+    corners[R > T * R.max()] = 1
+    
+    # Step 6: Mark detected corners on the original image
+    result_image = image.copy()
+    for y, x in np.argwhere(corners):
+        cv2.circle(result_image, (x, y), radius=5, color=(0, 0, 255), thickness=2)
+    
+    return result_image

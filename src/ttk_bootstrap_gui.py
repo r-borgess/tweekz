@@ -1033,3 +1033,37 @@ class ImageEditorApp:
             self.root.after(0, self.display_image, np_image)
         except Exception as e:
             self.handle_error("Failed to skeletonize the image", e)
+
+    def harris_image(self):
+        self.create_harris_popup()
+
+    def create_harris_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Harris Corner Detection")
+        popup.geometry("200x200")
+
+        Label(popup, text="k:").pack(side="top", fill="x", pady=10)
+
+        k_entry = Entry(popup)
+        k_entry.pack(side="top", fill="x", padx=60)
+
+        Label(popup, text="T:").pack(side="top", fill="x", pady=10)
+
+        T_entry = Entry(popup)
+        T_entry.pack(side="top", fill="x", padx=60)
+
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_harris_and_close_popup(k_entry.get(), T_entry.get(), popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def apply_harris_and_close_popup(self, k, T, popup):
+        try:
+            k = float(k)
+            T = float(T)
+            np_image = self.image_processor.apply_harris_corner_detector(k, T)
+            self.root.after(0, self.display_image, np_image)
+            popup.destroy()
+        except ValueError:
+            messagebox.showerror("Harris Detector", "Invalid parameters. Please enter a valid number.")
+        except Exception as e:
+            self.handle_error("Failed to detect", e)
+            popup.destroy()

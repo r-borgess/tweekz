@@ -139,7 +139,14 @@ class ImageProcessor:
         if self.current_image is not None:
             gray_image = cv2.cvtColor(self.current_image, cv2.COLOR_BGR2GRAY)
             _, binary_image = cv2.threshold(gray_image, 127, 255, cv2.THRESH_BINARY)
-            self.current_image = image_processor.skeletize(gray_image)
+            self.current_image = image_processor.skeletize(binary_image)
+            return self.current_image
+        else:
+            raise ValueError("No image loaded.")
+        
+    def apply_harris_corner_detector(self, k, T):
+        if self.current_image is not None:
+            self.current_image = image_processor.harris_corner_detector(self.current_image, k, T)
             return self.current_image
         else:
             raise ValueError("No image loaded.")
