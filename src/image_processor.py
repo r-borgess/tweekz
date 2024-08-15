@@ -1171,3 +1171,47 @@ def harris_corner_detector(image, k=0.04, T=0.01):
         cv2.circle(result_image, (x, y), radius=5, color=(0, 0, 255), thickness=2)
     
     return result_image
+
+def template_matching(image, template):
+    """
+    Simple template matching from scratch using zero-mean cross-correlation.
+
+    Parameters:
+        image (np.array): The source image in which the template will be searched.
+        template (np.array): The template image to be matched within the source image.
+
+    Returns:
+        np.array: An image representing the correlation coefficients.
+    """
+    # Convert images to grayscale
+    if len(image.shape) == 3:
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if len(template.shape) == 3:
+        template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+
+    # Get dimensions of the source image and template
+    i_height, i_width = image.shape
+    t_height, t_width = template.shape
+
+    # Create an output array to store the correlation coefficients
+    output = np.zeros((i_height - t_height + 1, i_width - t_width + 1))
+
+    # Normalize the template
+    template = template - np.mean(template)
+
+    # Perform template matching
+    for x in range(output.shape[1]):
+        for y in range(output.shape[0]):
+            # Extract the sub-image
+            sub_image = image[y:y+t_height, x:x+t_width]
+            sub_image = sub_image - np.mean(sub_image)
+            
+            # Calculate the correlation coefficient
+            numerator = np.sum(sub_image * template)
+            denominator = np.sqrt(np.sum(sub_image**2) * np.sum(template**2))
+            if denominator == 0:
+                output[y, x] = 0
+            else:
+                output[y, x] = numerator / denominator
+
+    return output

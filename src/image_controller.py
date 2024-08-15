@@ -150,3 +150,10 @@ class ImageProcessor:
             return self.current_image
         else:
             raise ValueError("No image loaded.")
+        
+    def apply_template_matching(self, template_image):
+        if self.current_image is not None:
+            self.current_image = image_processor.template_matching(self.current_image, template_image)
+            return self.current_image
+        else:
+            raise ValueError("No image loaded.")

@@ -1067,3 +1067,52 @@ class ImageEditorApp:
         except Exception as e:
             self.handle_error("Failed to detect", e)
             popup.destroy()
+
+    def template_match_image(self):
+        self.create_template_matching_popup()
+
+    def create_template_matching_popup(self):
+        popup = Toplevel(self.root)
+        popup.title("Template Matching")
+        popup.geometry("300x150")
+
+        # Path display entry
+        self.template_path_entry = Entry(popup, width=40)
+        self.template_path_entry.pack(side="top", fill="x", padx=10, pady=10)
+
+        # Browse button to open file dialog
+        browse_button = Button(popup, text="Browse", command=self.browse_file)
+        browse_button.pack(side="top", pady=5)
+
+        # Apply button
+        apply_button = Button(popup, text="Apply", command=lambda: self.apply_template_matching_and_close_popup(popup))
+        apply_button.pack(side="bottom", pady=10)
+
+    def browse_file(self):
+        """ Open a file dialog window to select an image file. """
+        file_path = filedialog.askopenfilename(title="Select a template image",
+                                               filetypes=(("jpeg files", "*.jpg"), ("png files", "*.png"), ("all files", "*.*")))
+        self.template_path_entry.delete(0, 'end')
+        self.template_path_entry.insert(0, file_path)
+
+    def apply_template_matching_and_close_popup(self, popup):
+        template_path = self.template_path_entry.get()
+        try:
+            # Load images
+            template_image = cv2.imread(template_path)
+
+            # Check if template image is loaded properly
+            if template_image is None:
+                raise ValueError("Template image could not be loaded. Check the path.")
+
+            # Perform template matching
+            match_result = self.image_processor.apply_template_matching(template_image)
+
+            # Display results
+            self.display_image(match_result)
+            popup.destroy()
+        except ValueError as ve:
+            messagebox.showerror("Template Matching", str(ve))
+        except Exception as e:
+            messagebox.showerror("Template Matching", "Failed to perform template matching: {}".format(e))
+            popup.destroy()
