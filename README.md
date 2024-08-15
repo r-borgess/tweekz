@@ -6,13 +6,58 @@ This tool is designed as a platform for demonstrating and executing image proces
 
 ## Features
 
-- Load and display images from your file system.
-- Save modified images back to your file system.
-- Intensity transformations.
-- Spatial and frequency domain filtering.
-- Morphological operations.
-- Compressing.
-- Restore the original state of any modified image.
+- **Intensity Transformations:**
+  - Blackout
+  - Gamma Transform
+  - Contrast Stretch
+  - Bit Plane Extraction
+  - Histogram Equalization
+  - Intensity Slicing
+
+- **Spatial Domain Processing:**
+  - **Smoothing:**
+    - Average Filter
+  - **Order-Statistics:**
+    - Min Filter
+    - Max Filter
+    - Median Filter
+  - **Sharpening:**
+    - Laplacian Filter
+
+- **Frequency Domain Processing:**
+  - Fourier Transform (FT)
+  - **Basic Filters:**
+    - Low Pass Filter
+    - High Pass Filter
+    - Notch Reject Filter
+
+- **Image Restoration:**
+  - **Noise Effects:**
+    - Generate Noise: Gaussian, Salt and Pepper
+    - Apply Noise: Gaussian, Salt and Pepper
+  - **Filtering:**
+    - Geometric Mean Filter
+    - Alpha-Trimmed Mean Filter
+
+- **Morphological Operations:**
+  - Erosion
+  - Dilation
+  - Opening
+  - Closing
+
+- **Image Compression:**
+  - Huffman Coding
+
+- **Image Segmentation:**
+  - Region Growing
+  - Canny Edge Detection
+  - Chain Code
+  - Skeletonization
+
+- **Feature Detection:**
+  - Harris Corner Detection
+  - MSER (Maximally Stable Extremal Regions)
+  - Template Matching
 
 ## Getting Started
 
